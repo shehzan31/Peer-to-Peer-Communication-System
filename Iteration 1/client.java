@@ -17,11 +17,33 @@ public class client {
     }
 
     public static void sendCode(BufferedWriter writer){
+    try{  
+        BufferedReader in = new BufferedReader(new FileReader("C:\\Users\\humbl\\OneDrive\\Documents\\CPSC 559\\Project\\CPSC-559-Iteration-1\\Iteration 1\\client.java"));
+        String line = in.readLine();
     
+        writer.write("Java\n");
+
+        while(line != null)
+        {
+          writer.write(line);
+          writer.flush();
+          line = in.readLine();
+          System.out.println(line);
+        }
+        writer.write("\n...\n");
+        writer.flush();
+        in.close();
+
+    }
+    catch(Exception err) {
+        System.out.println("Error: " + err.getMessage());
+        }
     }
 
     public static void receiveInfo(String info){
     
+
+        
     }
 
     public static void sendReport(BufferedWriter writer){
@@ -53,6 +75,8 @@ public class client {
                     case "get code":
                         System.out.println("Requesting code base");
                         sendCode(writer);
+                        // writer.write("java\n" +"mycode\n"+"..."+ "\n");
+                        // writer.flush();
                         System.out.println("Sent code base");
                         break;
                     case "receive peers":
