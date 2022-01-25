@@ -40,37 +40,38 @@ public class client {
 			)
 		{
             Boolean open = true;
-                    while(open){
-                        String response;
-                        response = reader.readLine().trim();
-                        switch(response){
-                            case "get team name":
-                                System.out.println("Requesting team name");
-                                sendTeamName(writer);
-                                System.out.println("Sent team name");
-                                break;
-                            case "get code":
-                                System.out.println("Requesting code base");
-                                sendCode(writer);
-                                System.out.println("Sent code base");
-                                break;
-                            case "receive request":
-                                System.out.println("Receiving request");
-                                receiveInfo(response);
-                                System.out.println("Received");
-                                break;
-                            case "get report":
-                                System.out.println("Requesting report");
-                                sendReport(writer);
-                                System.out.println("Sent report");
-                                break;
-                            case "close":
-                                System.out.println("Requesting to close the socket");
-                                open = false;
-                                break;
-                        }
-                    }
-
+            while(open){
+                String response;
+                response = reader.readLine();
+                String type = response.split("/n", 2)[0];
+                switch(type){
+                    case "get team name":
+                        System.out.println("Requesting team name");
+                        sendTeamName(writer);
+                        System.out.println("Sent team name");
+                        break;
+                    case "get code":
+                        System.out.println("Requesting code base");
+                        sendCode(writer);
+                        System.out.println("Sent code base");
+                        break;
+                    case "receive peers":
+                        System.out.println("Receiving peers");
+                        receiveInfo(response);
+                        System.out.println("Received");
+                        break;
+                    case "get report":
+                        System.out.println("Requesting report");
+                        sendReport(writer);
+                        System.out.println("Sent report");
+                        break;
+                    case "close":
+                        System.out.println("Requesting to close the socket");
+                        open = false;
+                        break;
+                }
+            }
+            clientSocket.close();
 		}
 		catch(Exception err) {
 			System.out.println("Error: " + err.getMessage());
