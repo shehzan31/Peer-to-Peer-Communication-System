@@ -8,7 +8,7 @@ public class client {
         String teamName = "The Social Network";
 
         try{
-            writer.write(teamName+"/n");
+            writer.write(teamName+"\n");
             writer.flush();
         }
         catch(Exception err) {
