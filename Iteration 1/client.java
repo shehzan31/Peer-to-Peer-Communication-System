@@ -18,14 +18,14 @@ public class client {
 
     public static void sendCode(BufferedWriter writer){
     try{  
-        BufferedReader in = new BufferedReader(new FileReader("C:\\Users\\humbl\\OneDrive\\Documents\\CPSC 559\\Project\\CPSC-559-Iteration-1\\Iteration 1\\client.java"));
+        BufferedReader in = new BufferedReader(new FileReader("client.java"));
         String line = in.readLine();
     
         writer.write("Java\n");
 
         while(line != null)
         {
-          writer.write(line);
+          writer.write(line+"\n");
           writer.flush();
           line = in.readLine();
           System.out.println(line);
