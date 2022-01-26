@@ -1,6 +1,8 @@
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.time.format.DateTimeFormatter;  
+import java.time.LocalDateTime;    
 
 
 public class client {
@@ -55,6 +57,9 @@ public class client {
                 }
                 if (!received) peers.add(peer);
             }
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
+            LocalDateTime now = LocalDateTime.now();  
+            System.out.println(dtf.format(now));  
             System.out.println(peers);
         }
         catch(Exception err) {
