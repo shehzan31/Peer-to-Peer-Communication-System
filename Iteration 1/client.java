@@ -1,8 +1,11 @@
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 
 
 public class client {
+
+    public static ArrayList<String> peers = new ArrayList<String>();
 
     public static void sendTeamName(BufferedWriter writer){
         String teamName = "The Social Network";
@@ -17,32 +20,46 @@ public class client {
     }
 
     public static void sendCode(BufferedWriter writer){
-    try{  
-        BufferedReader in = new BufferedReader(new FileReader("client.java"));
-        String line = in.readLine();
+        try{  
+            BufferedReader in = new BufferedReader(new FileReader("client.java"));
+            String line = in.readLine();
     
-        writer.write("Java\n");
+            writer.write("Java\n");
 
-        while(line != null)
-        {
-          writer.write(line+"\n");
-          writer.flush();
-          line = in.readLine();
-          System.out.println(line);
+            while(line != null)
+            {
+              writer.write(line+"\n");
+              writer.flush();
+              line = in.readLine();
+            }
+            writer.write("\n...\n");
+            writer.flush();
+            in.close();
+
         }
-        writer.write("\n...\n");
-        writer.flush();
-        in.close();
-
-    }
-    catch(Exception err) {
-        System.out.println("Error: " + err.getMessage());
+        catch(Exception err) {
+            System.out.println("Error: " + err.getMessage());
         }
     }
 
-    public static void receiveInfo(String info){
-    
-
+    public static void receivePeers(BufferedReader reader){
+        try{
+            int numPeers = Integer.parseInt(reader.readLine());
+            for (int i = 0; i < numPeers; i++) {
+                String peer = reader.readLine().trim();
+                boolean received = false;
+                for (int j = 0; j < peers.size(); j++){
+                    if (peers.get(j) == peer){
+                        received = true;
+                    }
+                }
+                if (!received) peers.add(peer);
+            }
+            System.out.println(peers);
+        }
+        catch(Exception err) {
+            System.out.println("Error: " + err.getMessage());
+        }
         
     }
 
@@ -65,8 +82,8 @@ public class client {
             while(open){
                 String response;
                 response = reader.readLine();
-                String type = response.split("/n", 2)[0];
-                switch(type){
+                //String type = response.split("/n", 2)[0];
+                switch(response){
                     case "get team name":
                         System.out.println("Requesting team name");
                         sendTeamName(writer);
@@ -75,13 +92,11 @@ public class client {
                     case "get code":
                         System.out.println("Requesting code base");
                         sendCode(writer);
-                        // writer.write("java\n" +"mycode\n"+"..."+ "\n");
-                        // writer.flush();
                         System.out.println("Sent code base");
                         break;
                     case "receive peers":
                         System.out.println("Receiving peers");
-                        receiveInfo(response);
+                        receivePeers(reader);
                         System.out.println("Received");
                         break;
                     case "get report":
