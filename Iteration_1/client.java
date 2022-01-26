@@ -2,12 +2,26 @@ import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.time.format.DateTimeFormatter;  
-import java.time.LocalDateTime;    
+import java.time.LocalDateTime;
+
+class source{
+    
+    public String location;
+    public String timeReceived;
+    public ArrayList<String> source_peers;
+
+    public source(String location, String time, ArrayList<String> peers){
+        this.location = location;
+        this.timeReceived = time;
+        this.source_peers = peers;
+    }
+}
 
 
 public class client {
 
     public static ArrayList<String> peers = new ArrayList<String>();
+    public static ArrayList<source> sources = new ArrayList<source>();
 
     public static void sendTeamName(BufferedWriter writer){
         String teamName = "The Social Network";
@@ -44,8 +58,9 @@ public class client {
         }
     }
 
-    public static void receivePeers(BufferedReader reader){
+    public static void receivePeers(BufferedReader reader, Socket sock){
         try{
+            ArrayList<String> localPeers = new ArrayList<String>();
             int numPeers = Integer.parseInt(reader.readLine());
             for (int i = 0; i < numPeers; i++) {
                 String peer = reader.readLine().trim();
@@ -56,11 +71,12 @@ public class client {
                     }
                 }
                 if (!received) peers.add(peer);
+                localPeers.add(peer);
             }
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
-            LocalDateTime now = LocalDateTime.now();  
-            System.out.println(dtf.format(now));  
-            System.out.println(peers);
+            LocalDateTime now = LocalDateTime.now();
+            source newSource = new source(sock.getInetAddress().getHostAddress()+":"+sock.getPort(), dtf.format(now), localPeers);  
+            sources.add(newSource);
         }
         catch(Exception err) {
             System.out.println("Error: " + err.getMessage());
@@ -69,7 +85,23 @@ public class client {
     }
 
     public static void sendReport(BufferedWriter writer){
-    
+        try{
+            writer.write(Integer.toString(peers.size())+"\n");
+            for(String p : peers){
+                writer.write(p+"\n");
+            }
+            writer.write(Integer.toString(sources.size())+"\n");
+            for(source s : sources){
+                writer.write(s.location + "\n" + s.timeReceived + "\n" + Integer.toString(s.source_peers.size()) + "\n");
+                for(String p : s.source_peers) {
+                    writer.write(p+"\n");
+                }
+            }
+            writer.flush();
+        }
+        catch(Exception err){
+            System.out.println("Error: " + err.getMessage());
+        } 
     }
     
     
@@ -87,7 +119,6 @@ public class client {
             while(open){
                 String response;
                 response = reader.readLine();
-                //String type = response.split("/n", 2)[0];
                 switch(response){
                     case "get team name":
                         System.out.println("Requesting team name");
@@ -101,7 +132,7 @@ public class client {
                         break;
                     case "receive peers":
                         System.out.println("Receiving peers");
-                        receivePeers(reader);
+                        receivePeers(reader, clientSocket);
                         System.out.println("Received");
                         break;
                     case "get report":
