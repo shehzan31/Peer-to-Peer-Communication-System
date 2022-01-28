@@ -75,7 +75,7 @@ public class client {
             }
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
             LocalDateTime now = LocalDateTime.now();
-            source newSource = new source(sock.getInetAddress().getHostAddress()+":"+sock.getPort(), dtf.format(now), localPeers);  
+            source newSource = new source(sock.getInetAddress().getLocalHost().getHostAddress()+":"+sock.getPort(), dtf.format(now), localPeers);  
             sources.add(newSource);
         }
         catch(Exception err) {
@@ -107,7 +107,7 @@ public class client {
     
     public static void main(String[] args)
 	{
-        String host = "136.159.5.22"; // change it to localhost if running on your pc
+        String host = "localhost"; //"136.159.5.22"; // change it to localhost if running on your pc
         int port = 55921;
 		try (
 				Socket clientSocket = new Socket(host, port);

@@ -5,3 +5,17 @@ Source: 127.0.0.1:55921
 Date: 2022/01/26 15:04:15
 Num of peers received: 1
 127.0.0.1:53188 
+Thu Jan 27 23:17:35 MST 2022
+1 in list: 127.0.0.1:63356 
+1 sources:
+Source: 127.0.0.1:55921
+Date: 2022/01/27 23:17:35
+Num of peers received: 1
+127.0.0.1:63356 
+Thu Jan 27 23:21:13 MST 2022
+1 in list: 127.0.0.1:63682 
+1 sources:
+Source: 10.0.0.177:55921
+Date: 2022/01/27 23:21:13
+Num of peers received: 1
+127.0.0.1:63682 
