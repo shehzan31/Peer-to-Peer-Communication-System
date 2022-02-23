@@ -180,7 +180,7 @@ public class client {
     public static void main(String[] args)
 	{
         // host address and port number of Registry
-        String host = "localhost"; //"136.159.5.22"; // change it to localhost if running on your pc
+        String host = "136.159.5.22"; // change it to localhost if running on your pc
         int port = 55921;
 		try (
                 // Socket connection via host and port 
