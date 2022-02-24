@@ -171,6 +171,25 @@ public class client {
     }
     
     /**
+     * Sends the location through the BufferedWritter of the OutputStream in the socket connection.
+     * @param writer
+     * @param host
+     * @param port
+     */
+    public static void sendLocation(BufferedWriter writer, String host, int port){
+        try{
+            //writes then flushes
+            writer.write(host + ":" + port + "\n");
+            writer.flush();
+        }
+        catch(Exception err) {
+            //exception handling
+            System.out.println("Error: " + err.getMessage());
+            }
+    }
+
+
+    /**
      * Main method to drive the whole client program, connects to the Registry
      * via ip address and port number thru a TCP connection. Reads the requests 
      * and handles each of them respectively. After a close request is read, it 
@@ -180,7 +199,7 @@ public class client {
     public static void main(String[] args)
 	{
         // host address and port number of Registry
-        String host = "136.159.5.22"; // change it to localhost if running on your pc
+        String host = "localhost"; // change it to localhost if running on your pc or "136.159.5.22"
         int port = 55921;
 		try (
                 // Socket connection via host and port 
@@ -199,6 +218,12 @@ public class client {
                 response = reader.readLine();
                 // upon the request switch
                 switch(response){
+                    // send location
+                    case "get location":
+                        System.out.println("Requesting location");
+                        sendLocation(writer,host,port);
+                        System.out.println("Sent location");
+                        break;
                     // send team name
                     case "get team name":
                         System.out.println("Requesting team name");
