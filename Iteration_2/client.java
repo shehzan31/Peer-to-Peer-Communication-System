@@ -249,6 +249,7 @@ public class client {
                         System.out.println("Requesting location");
                         sendLocation(writer);
                         System.out.println("Sent Location");
+                        break;
                     // close request
                     case "close":
                         System.out.println("Requesting to close the socket");
