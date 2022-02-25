@@ -1,4 +1,4 @@
-Fri Feb 25 13:23:09 MST 2022
+Fri Feb 25 14:12:35 MST 2022
 java
 /**
  * CPSC 559: Project Iteration 1 solution
@@ -44,6 +44,8 @@ public class client {
     public static int registryPort = 55921;
     // UDP port
     public static int UDP_PORT = 33333;
+    // stop UDP
+    public static boolean recieveStop = false;
 
     /**
      * Sends the team name through the BufferedWritter of the OutputStream in the socket connection.
@@ -196,6 +198,7 @@ public class client {
 
     public static void shutDownProcedure(){
         initiateRegistryContact(registryHost, registryPort);
+        recieveStop = true;
     }
 
     public static void snipReceived(String received){
@@ -207,22 +210,23 @@ public class client {
     }
 
     public static void createUDPReceiveThread(DatagramSocket peerSock){
-        Thread t = new Thread(new Runnable() {
-            @Override
+        Thread t = new Thread() {
             public void run(){
+                System.out.println("Received from UDP");
                 byte[] buf = new byte[256];
                 DatagramPacket pack = new DatagramPacket(buf, buf.length);
                 while(true){
                     try{
                         peerSock.receive(pack);
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(buf)));
-                        String received = reader.readLine();
+                        System.out.println("Received from UDP");
+                        String received = new String(buf);
                         String first4char = null;
                         if(received.length() > 4){
                             first4char = received.substring(0, 4);
                         }
                         switch(first4char){
                             case "stop":
+                                System.out.println("Stop received from UDP");
                                 shutDownProcedure();
                                 break;
                             case "snip":
@@ -238,7 +242,12 @@ public class client {
                     } 
                 }
             }
-        });
+        };
+        t.start();
+    }
+
+    public static void collabPeers(DatagramSocket peerSock){
+
     }
 
     public static void initiateRegistryContact(String host, int port){
@@ -321,6 +330,7 @@ public class client {
 		{
             createUDPReceiveThread(peerSock);
             initiateRegistryContact(registryHost, registryPort);
+            while(!recieveStop) collabPeers(peerSock);
 		}
 		catch(Exception err) {
             // Exception handling

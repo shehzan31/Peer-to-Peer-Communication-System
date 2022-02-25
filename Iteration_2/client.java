@@ -42,6 +42,8 @@ public class client {
     public static int registryPort = 55921;
     // UDP port
     public static int UDP_PORT = 33333;
+    // stop UDP
+    public static boolean recieveStop = false;
 
     /**
      * Sends the team name through the BufferedWritter of the OutputStream in the socket connection.
@@ -194,6 +196,7 @@ public class client {
 
     public static void shutDownProcedure(){
         initiateRegistryContact(registryHost, registryPort);
+        recieveStop = true;
     }
 
     public static void snipReceived(String received){
@@ -205,16 +208,14 @@ public class client {
     }
 
     public static void createUDPReceiveThread(DatagramSocket peerSock){
-        Thread t = new Thread(new Runnable() {
-            @Override
+        Thread t = new Thread() {
             public void run(){
                 byte[] buf = new byte[256];
                 DatagramPacket pack = new DatagramPacket(buf, buf.length);
-                while(true){
+                while(!recieveStop){
                     try{
                         peerSock.receive(pack);
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(buf)));
-                        String received = reader.readLine();
+                        String received = new String(buf);
                         String first4char = null;
                         if(received.length() > 4){
                             first4char = received.substring(0, 4);
@@ -236,7 +237,12 @@ public class client {
                     } 
                 }
             }
-        });
+        };
+        t.start();
+    }
+
+    public static void collabPeers(DatagramSocket peerSock){
+
     }
 
     public static void initiateRegistryContact(String host, int port){
@@ -319,6 +325,7 @@ public class client {
 		{
             createUDPReceiveThread(peerSock);
             initiateRegistryContact(registryHost, registryPort);
+            while(!recieveStop) collabPeers(peerSock);
 		}
 		catch(Exception err) {
             // Exception handling
