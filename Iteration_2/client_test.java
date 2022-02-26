@@ -143,7 +143,7 @@ public class client_test {
                 //checking if the peer is already in the list
                 for (int j = 0; j < peers.size(); j++){
                     // if found change the bool to true
-                    if (peers.get(j).location.compareTo(loc)==0){
+                    if (peers.get(j).location.equals(loc)){
                         received = true;
                     }
                 }
@@ -154,7 +154,7 @@ public class client_test {
                 }
                 // add peerto the local list of peers
                 for(Peer find:peers){
-                    if(find.location.compareTo(loc) == 0 && find.timeStamp == now){
+                    if(find.location.equals(loc) && find.timeStamp == now){
                         localPeers.add(find);
                         break;
                     }
@@ -225,7 +225,6 @@ public class client_test {
     public static void shutDownProcedure(){
         initiateRegistryContact(registryHost, registryPort);
         recieveStop = true;
-    
     }
 
     public static void snipReceived(String received){
@@ -233,11 +232,11 @@ public class client_test {
     }
 
     public static void peerReceived(String received, String source_location){
-        received = received.substring(4, received.length());
+        received = received.substring(4, received.length()).trim();
         LocalDateTime now = LocalDateTime.now();
         Boolean sourceAvail = false;
         for(Peer p : peers){
-            if(p.location.compareTo(source_location) == 0){
+            if(p.location.equals(source_location)){
                 p.timeStamp = now;
                 sourceAvail = true;
             }
@@ -248,7 +247,7 @@ public class client_test {
         }
         Boolean peerAvail = false;
         for(Peer p : peers){
-            if(p.location.compareTo(received) == 0){
+            if(p.location.equals(received)){
                 peerAvail = true;
             }
         }
@@ -267,7 +266,8 @@ public class client_test {
                 while(!recieveStop){
                     try{
                         peerSock.receive(pack);
-                        String source_location = ((InetSocketAddress) pack.getSocketAddress()).getHostString() + ":" + pack.getPort();
+                        int source_port = pack.getPort();
+                        String source_location = ((InetSocketAddress) pack.getSocketAddress()).getHostString() + ":" + Integer.toString(source_port);
                         String received = new String(buf);
                         String first4char = null;
                         if(received.length() > 4){
@@ -298,45 +298,34 @@ public class client_test {
     public static void sendPeerPackets(DatagramSocket peerSock){
         Thread t = new Thread(){
             public void run(){
-                for(Peer p : peers){
-                    if(p.location.compareTo(ourLocation) != 0){
-                        LocalDateTime now = LocalDateTime.now();
-                        if(Duration.between(p.timeStamp, now).getSeconds() < 10){
-                            try {
+                try{
+                    for(Peer p : peers){
+                        if(!p.location.equals(ourLocation)){
+                            LocalDateTime now = LocalDateTime.now();
+                            if(Duration.between(p.timeStamp, now).getSeconds() < 10){
                                 InetAddress host = InetAddress.getByName(p.location.split(":")[0]);
-                                int port = Integer.parseInt(p.location.split(":")[1]);
+                                Integer port = Integer.valueOf(p.location.split(":")[1].trim());
                                 for(Peer peer_info : peers){
                                     if(Duration.between(peer_info.timeStamp, now).getSeconds() < 10){
                                         byte[] toSend = ("peer"+peer_info.location).getBytes();
                                         DatagramPacket packet = new DatagramPacket(toSend, toSend.length, host, port);
                                         peerSock.send(packet);
-                                        System.out.println("Sent peer "+ peer_info.location);
+                                        System.out.println("Sent peer "+ peer_info.location + " to " + p.location);
                                     }
-                                } 
-                            }
-                            catch (Exception err){
-                                System.out.println("Error: "+ err);
-                            }
-                        } 
+                                }   
+                            } 
+                        }
                     }
                     
+                }
+                catch (Exception err){
+                    System.out.println("Error: "+ err);
                 }
             }
         };
         t.start();
     }
 
-    public static void collabPeers(DatagramSocket peerSock){
-        try {
-            while(!recieveStop){
-                sendPeerPackets(peerSock);
-                TimeUnit.SECONDS.sleep(6);
-            }
-        } catch (Exception err) {
-            System.out.println("Error: "+err);
-        }
-        
-    }
 
     public static void initiateRegistryContact(String host, int port){
         try (
@@ -417,10 +406,13 @@ public class client_test {
                 DatagramSocket peerSock = new DatagramSocket(UDP_PORT);
 			)
 		{
-            ourLocation = InetAddress.getLocalHost().getHostAddress()+":"+Integer.toString(UDP_PORT);
+            ourLocation = InetAddress.getLocalHost().getHostAddress()+":"+UDP_PORT;
             createUDPReceiveThread(peerSock);
             initiateRegistryContact(registryHost, registryPort);
-            while(!recieveStop) collabPeers(peerSock);
+            while(!recieveStop){
+                sendPeerPackets(peerSock);
+                TimeUnit.SECONDS.sleep(6);
+            } 
 		}
 		catch(Exception err) {
             // Exception handling
