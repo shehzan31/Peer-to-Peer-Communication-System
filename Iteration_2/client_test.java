@@ -45,7 +45,7 @@ class Peer{
 }
 
 // Client class - main class
-public class client {
+public class client_test {
 
     // master arraylist to store peers (no duplicates) and sources (class provided above)
     public static ArrayList<Peer> peers = new ArrayList<Peer>();
@@ -55,7 +55,7 @@ public class client {
     // TCP PORT
     public static int registryPort = 55921;
     // UDP port
-    public static int UDP_PORT = 33333;
+    public static int UDP_PORT = 44444;
     // stop UDP
     public static boolean recieveStop = false;
     
@@ -68,7 +68,7 @@ public class client {
      * @param writer
      */
     public static void sendTeamName(BufferedWriter writer){
-        String teamName = "The Social Network";
+        String teamName = "test";
 
         try{
             //writes then flushes
