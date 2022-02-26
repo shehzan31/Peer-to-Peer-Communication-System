@@ -9,6 +9,8 @@
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.time.format.DateTimeFormatter;  
 import java.time.LocalDateTime;
 
@@ -44,6 +46,8 @@ public class client {
     public static int UDP_PORT = 33333;
     // stop UDP
     public static boolean recieveStop = false;
+    
+    public static ConcurrentHashMap<String, Boolean> peer_alive = new ConcurrentHashMap<String, Boolean>();
 
     /**
      * Sends the team name through the BufferedWritter of the OutputStream in the socket connection.
@@ -241,8 +245,37 @@ public class client {
         t.start();
     }
 
-    public static void collabPeers(DatagramSocket peerSock){
+    public static void sendPeerPackets(DatagramSocket peerSock){
+        Thread t = new Thread(){
+            public void run(){
+                for(String p : peers){
+                    if(!peer_alive.containsKey(p) || (peer_alive.get(p)==true)){
+                        peer_alive.put(p, false);
+                        InetAddress host = InetAddress.getByName(p.split(":")[0]);
+                        int port = Integer.parseInt(p.split(":")[1]);
+                        try {
+                            for(String peer_info : peers){
+                                byte[] toSend = ("peer"+peer_info).getBytes();
+                                DatagramPacket packet = new DatagramPacket(toSend, toSend.length, host, port);
+                                peerSock.send(packet);
+                                System.out.println("Sent peer "+ peer_info);
+                            } 
+                        }
+                        catch (Exception err){
+                            System.out.println("Error: "+ err);
+                        }
+                    } 
+                }
+            }
+        };
+        t.start();
+    }
 
+    public static void collabPeers(DatagramSocket peerSock){
+        while(!recieveStop){
+            sendPeerPackets(peerSock);
+            TimeUnit.SECONDS.sleep(6);
+        }
     }
 
     public static void initiateRegistryContact(String host, int port){
