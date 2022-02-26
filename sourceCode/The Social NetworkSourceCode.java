@@ -1,4 +1,4 @@
-Fri Feb 25 19:13:59 MST 2022
+Fri Feb 25 20:22:33 MST 2022
 java
 /**
  * CPSC 559: Project Iteration 1 solution
@@ -61,7 +61,6 @@ public class client {
     // stop UDP
     public static boolean recieveStop = false;
     
-    public static ConcurrentHashMap<String, Boolean> peer_alive = new ConcurrentHashMap<String, Boolean>();
 
     public static String ourLocation;
 
@@ -146,7 +145,7 @@ public class client {
                 //checking if the peer is already in the list
                 for (int j = 0; j < peers.size(); j++){
                     // if found change the bool to true
-                    if (peers.get(j).location == loc){
+                    if (peers.get(j).location.compareTo(loc)==0){
                         received = true;
                     }
                 }
@@ -154,14 +153,15 @@ public class client {
                 if (!received){
                     Peer newPeer = new Peer(loc, now);
                     peers.add(newPeer);
-                } 
+                }
+                // add peerto the local list of peers
                 for(Peer find:peers){
-                    if(find.location == loc && find.timeStamp == now){
+                    if(find.location.compareTo(loc) == 0 && find.timeStamp == now){
                         localPeers.add(find);
                         break;
                     }
                 }
-                // add peerto the local list of peers
+                
                 
             }
             
@@ -233,8 +233,31 @@ public class client {
 
     }
 
-    public static void peerReceived(String received){
-        System.out.println("Received a peer " + received);
+    public static void peerReceived(String received, String source_location){
+        received = received.substring(4, received.length());
+        LocalDateTime now = LocalDateTime.now();
+        Boolean sourceAvail = false;
+        for(Peer p : peers){
+            if(p.location.compareTo(source_location) == 0){
+                p.timeStamp = now;
+                sourceAvail = true;
+            }
+        }
+        if(!sourceAvail){
+            Peer source = new Peer(source_location, now);
+            peers.add(source);
+        }
+        Boolean peerAvail = false;
+        for(Peer p : peers){
+            if(p.location.compareTo(received) == 0){
+                peerAvail = true;
+            }
+        }
+        if(!peerAvail){
+            Peer peerAdd = new Peer(received, now);
+            peers.add(peerAdd);
+        }
+        System.out.println("Received peer "+received+" from "+source_location);
     }
 
     public static void createUDPReceiveThread(DatagramSocket peerSock){
@@ -245,6 +268,7 @@ public class client {
                 while(!recieveStop){
                     try{
                         peerSock.receive(pack);
+                        String source_location = ((InetSocketAddress) pack.getSocketAddress()).getHostString() + ":" + Integer.toString(pack.getPort());
                         String received = new String(buf);
                         String first4char = null;
                         if(received.length() > 4){
@@ -259,7 +283,7 @@ public class client {
                                 snipReceived(received);
                                 break;
                             case "peer":
-                                peerReceived(received);
+                                peerReceived(received, source_location);
                                 break;
                         }
                     }
