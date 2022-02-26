@@ -266,7 +266,7 @@ public class client {
                 while(!recieveStop){
                     try{
                         peerSock.receive(pack);
-                        String source_location = ((InetSocketAddress) pack.getSocketAddress()).getHostString() + ":" + Integer.toString(pack.getPort());
+                        String source_location = ((InetSocketAddress) pack.getSocketAddress()).getHostString() + ":" + pack.getPort();
                         String received = new String(buf);
                         String first4char = null;
                         if(received.length() > 4){
@@ -416,7 +416,7 @@ public class client {
                 DatagramSocket peerSock = new DatagramSocket(UDP_PORT);
 			)
 		{
-            ourLocation = InetAddress.getLocalHost().getHostAddress()+":"+Integer.toString(UDP_PORT);
+            ourLocation = InetAddress.getLocalHost().getHostAddress()+":"+UDP_PORT;
             createUDPReceiveThread(peerSock);
             initiateRegistryContact(registryHost, registryPort);
             while(!recieveStop) collabPeers(peerSock);

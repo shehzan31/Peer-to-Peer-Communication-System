@@ -267,7 +267,7 @@ public class client_test {
                 while(!recieveStop){
                     try{
                         peerSock.receive(pack);
-                        String source_location = ((InetSocketAddress) pack.getSocketAddress()).getHostString() + ":" + Integer.toString(pack.getPort());
+                        String source_location = ((InetSocketAddress) pack.getSocketAddress()).getHostString() + ":" + pack.getPort();
                         String received = new String(buf);
                         String first4char = null;
                         if(received.length() > 4){

@@ -1,4 +1,4 @@
-Fri Feb 25 20:22:33 MST 2022
+Fri Feb 25 20:56:00 MST 2022
 java
 /**
  * CPSC 559: Project Iteration 1 solution
@@ -11,6 +11,8 @@ java
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.time.format.DateTimeFormatter;
@@ -50,7 +52,8 @@ class Peer{
 public class client {
 
     // master arraylist to store peers (no duplicates) and sources (class provided above)
-    public static ArrayList<Peer> peers = new ArrayList<Peer>();
+    public static List<Peer> peers_unsafe = new ArrayList<Peer>();
+    public static List<Peer> peers = Collections.synchronizedList(peers_unsafe);
     public static ArrayList<source> sources = new ArrayList<source>();
     // host address and port number of Registry
     public static String registryHost = "localhost"; //"136.159.5.22"; // change it to localhost if running on your pc
@@ -268,7 +271,7 @@ public class client {
                 while(!recieveStop){
                     try{
                         peerSock.receive(pack);
-                        String source_location = ((InetSocketAddress) pack.getSocketAddress()).getHostString() + ":" + Integer.toString(pack.getPort());
+                        String source_location = ((InetSocketAddress) pack.getSocketAddress()).getHostString() + ":" + pack.getPort();
                         String received = new String(buf);
                         String first4char = null;
                         if(received.length() > 4){
@@ -418,7 +421,7 @@ public class client {
                 DatagramSocket peerSock = new DatagramSocket(UDP_PORT);
 			)
 		{
-            ourLocation = InetAddress.getLocalHost().getHostAddress()+":"+Integer.toString(UDP_PORT);
+            ourLocation = InetAddress.getLocalHost().getHostAddress()+":"+UDP_PORT;
             createUDPReceiveThread(peerSock);
             initiateRegistryContact(registryHost, registryPort);
             while(!recieveStop) collabPeers(peerSock);
