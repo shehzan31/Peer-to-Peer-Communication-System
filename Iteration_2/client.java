@@ -10,12 +10,11 @@ import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Scanner;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
+
 import java.time.format.DateTimeFormatter;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.Period;
+
 
 
 
@@ -76,8 +75,10 @@ class SnipSend extends Thread{
         try{
             Scanner keyboard = new Scanner(System.in);
             while(!Thread.currentThread().isInterrupted()){
-                String content = keyboard.nextLine();
+                
+                String content = keyboard.nextLine();   
                 int timeStampSend = timeStamp.incrementTimeStamp();
+                
                 byte[] toSend = ("snip"+Integer.toString(timeStampSend)+" "+content).getBytes();
                 for(Peer p : peers){
                     if(!p.location.equals(ourLocation)){
@@ -85,19 +86,14 @@ class SnipSend extends Thread{
                         if(Duration.between(p.timeStamp, now).getSeconds() < 10){
                             InetAddress host = InetAddress.getByName(p.location.split(":")[0]);
                             Integer port = Integer.valueOf(p.location.split(":")[1].trim());
-                            for(Peer peer_info : peers){
-                                if(Duration.between(peer_info.timeStamp, now).getSeconds() < 10){
-                                    DatagramPacket packet = new DatagramPacket(toSend, 256, host, port);
-                                    peerSock.send(packet);
-                                }
-                            }   
+                            DatagramPacket packet = new DatagramPacket(toSend, toSend.length, host, port);
+                            peerSock.send(packet);   
                         } 
                     }
                 }
             }
-        }
-        catch(InterruptedException err){
-
+            keyboard.close();
+            System.out.println("Keyboard is closed");
         }
         catch(Exception err){
 
@@ -296,7 +292,7 @@ public class client {
     }
 
     public static void snipReceived(String received){
-
+        System.out.println(received.substring(4, received.length()).trim());
     }
 
     public static void peerReceived(String received, String source_location){
@@ -323,15 +319,15 @@ public class client {
             Peer peerAdd = new Peer(received, now);
             peers.add(peerAdd);
         }
-        System.out.println("Received peer "+received+" from "+source_location);
+        
     }
 
     public static void createUDPReceiveThread(DatagramSocket peerSock){
         Thread t = new Thread() {
             public void run(){
-                byte[] buf = new byte[256];
-                DatagramPacket pack = new DatagramPacket(buf, buf.length);
                 while(!recieveStop){
+                    byte[] buf = new byte[256];
+                    DatagramPacket pack = new DatagramPacket(buf, buf.length);
                     try{
                         peerSock.receive(pack);
                         int source_port = pack.getPort();
@@ -380,7 +376,6 @@ public class client {
                                             byte[] toSend = ("peer"+peer_info.location).getBytes();
                                             DatagramPacket packet = new DatagramPacket(toSend, toSend.length, host, port);
                                             peerSock.send(packet);
-                                            System.out.println("Sent peer "+ peer_info.location + " to " + p.location);
                                         }
                                     }   
                                 } 
@@ -483,6 +478,11 @@ public class client {
             sendPeerPackets(peerSock);
             SnipSend snipSend = new SnipSend(peerSock, timeStamp, peers, ourLocation);
             snipSend.start();
+            while(!recieveStop){
+
+            }
+            System.out.println("Stopping keyboard");
+            snipSend.interrupt();
 		}
 		catch(Exception err) {
             // Exception handling

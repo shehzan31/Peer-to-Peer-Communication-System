@@ -9,12 +9,12 @@
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
+import java.util.Scanner;
+
 import java.time.format.DateTimeFormatter;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.Period;
+
 
 
 
@@ -41,6 +41,62 @@ class Peer{
     public Peer(String loc, LocalDateTime time){
         this.location = loc;
         this.timeStamp = time;
+    }
+}
+
+class VolatileTimeStamp{
+    private volatile int timeStamp = 0;
+    public int getTimeStamp(){
+        return timeStamp;
+    }
+    public void setTimeStamp(int num){
+        timeStamp = num;
+    }
+    public int incrementTimeStamp(){
+        timeStamp++;
+        return timeStamp;
+    }
+}
+
+class SnipSend extends Thread{
+    public DatagramSocket peerSock;
+    public VolatileTimeStamp timeStamp;
+    public ArrayList<Peer> peers;
+    public String ourLocation;
+
+    public SnipSend(DatagramSocket sock, VolatileTimeStamp time, ArrayList<Peer> p, String loc){
+        this.peerSock = sock;
+        this.timeStamp = time;
+        this.peers = p;
+        this.ourLocation = loc;
+    }
+
+    public void start(){
+        try{
+            Scanner keyboard = new Scanner(System.in);
+            while(!Thread.currentThread().isInterrupted()){
+                
+                String content = keyboard.nextLine();   
+                int timeStampSend = timeStamp.incrementTimeStamp();
+                
+                byte[] toSend = ("snip"+Integer.toString(timeStampSend)+" "+content).getBytes();
+                for(Peer p : peers){
+                    if(!p.location.equals(ourLocation)){
+                        LocalDateTime now = LocalDateTime.now();
+                        if(Duration.between(p.timeStamp, now).getSeconds() < 10){
+                            InetAddress host = InetAddress.getByName(p.location.split(":")[0]);
+                            Integer port = Integer.valueOf(p.location.split(":")[1].trim());
+                            DatagramPacket packet = new DatagramPacket(toSend, toSend.length, host, port);
+                            peerSock.send(packet);   
+                        } 
+                    }
+                }
+            }
+            keyboard.close();
+        }
+        catch(Exception err){
+
+        }
     }
 }
 
@@ -235,7 +291,7 @@ public class client_test {
     }
 
     public static void snipReceived(String received){
-
+        System.out.println(received.substring(4, received.length()).trim());
     }
 
     public static void peerReceived(String received, String source_location){
@@ -262,15 +318,15 @@ public class client_test {
             Peer peerAdd = new Peer(received, now);
             peers.add(peerAdd);
         }
-        System.out.println("Received peer "+received+" from "+source_location);
+        
     }
 
     public static void createUDPReceiveThread(DatagramSocket peerSock){
         Thread t = new Thread() {
             public void run(){
-                byte[] buf = new byte[256];
-                DatagramPacket pack = new DatagramPacket(buf, buf.length);
                 while(!recieveStop){
+                    byte[] buf = new byte[256];
+                    DatagramPacket pack = new DatagramPacket(buf, buf.length);
                     try{
                         peerSock.receive(pack);
                         int source_port = pack.getPort();
@@ -319,7 +375,6 @@ public class client_test {
                                             byte[] toSend = ("peer"+peer_info.location).getBytes();
                                             DatagramPacket packet = new DatagramPacket(toSend, toSend.length, host, port);
                                             peerSock.send(packet);
-                                            System.out.println("Sent peer "+ peer_info.location + " to " + p.location);
                                         }
                                     }   
                                 } 
@@ -411,19 +466,30 @@ public class client_test {
      * @param args
      */
     public static void main(String[] args)
-	{
+	{              
 		try{
             ourLocation = InetAddress.getLocalHost().getHostAddress()+":"+UDP_PORT;
             initiateRegistryContact(registryHost, registryPort);
+            VolatileTimeStamp timeStamp = new VolatileTimeStamp();
             // Starting a datagram socket
             DatagramSocket peerSock = new DatagramSocket(UDP_PORT);
             createUDPReceiveThread(peerSock);
-            sendPeerPackets(peerSock);   
+            sendPeerPackets(peerSock);
+            SnipSend snipSend = new SnipSend(peerSock, timeStamp, peers, ourLocation);
+            snipSend.start();
+            while(!recieveStop){
+
+            }
+            try{
+                snipSend.interrupt();
+            }
+            catch(Exception err){
+                System.out.println("Error: "+ err);
+            }
 		}
 		catch(Exception err) {
             // Exception handling
 			System.out.println("Error: " + err.getMessage());
 		}
 	}
-
 }
