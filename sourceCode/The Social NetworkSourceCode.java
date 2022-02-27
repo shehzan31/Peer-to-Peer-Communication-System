@@ -1,4 +1,4 @@
-Sat Feb 26 14:37:45 MST 2022
+Sun Feb 27 13:45:28 MST 2022
 java
 /**
  * CPSC 559: Project Iteration 1 solution
@@ -224,9 +224,16 @@ public class client {
         }
     }
 
-    public static void shutDownProcedure(){
+    public static void shutDownProcedure(DatagramSocket peerSock){
+        
+        try{
+            peerSock.close();
+        }
+        catch(Exception err){
+            System.out.println("Error: " + err);
+        }
+        
         initiateRegistryContact(registryHost, registryPort);
-        recieveStop = true;
     }
 
     public static void snipReceived(String received){
@@ -278,7 +285,8 @@ public class client {
                         switch(first4char){
                             case "stop":
                                 System.out.println("Received 'stop' from the registry");
-                                shutDownProcedure(); 
+                                recieveStop = true;
+                                shutDownProcedure(peerSock); 
                                 break;
                             case "snip":
                                 snipReceived(received);
@@ -300,28 +308,31 @@ public class client {
     public static void sendPeerPackets(DatagramSocket peerSock){
         Thread t = new Thread(){
             public void run(){
-                try{
-                    for(Peer p : peers){
-                        if(!p.location.equals(ourLocation)){
-                            LocalDateTime now = LocalDateTime.now();
-                            if(Duration.between(p.timeStamp, now).getSeconds() < 10){
-                                InetAddress host = InetAddress.getByName(p.location.split(":")[0]);
-                                Integer port = Integer.valueOf(p.location.split(":")[1].trim());
-                                for(Peer peer_info : peers){
-                                    if(Duration.between(peer_info.timeStamp, now).getSeconds() < 10){
-                                        byte[] toSend = ("peer"+peer_info.location).getBytes();
-                                        DatagramPacket packet = new DatagramPacket(toSend, toSend.length, host, port);
-                                        peerSock.send(packet);
-                                        System.out.println("Sent peer "+ peer_info.location + " to " + p.location);
-                                    }
-                                }   
-                            } 
+                while(!recieveStop){
+                    try{
+                        for(Peer p : peers){
+                            if(!p.location.equals(ourLocation)){
+                                LocalDateTime now = LocalDateTime.now();
+                                if(Duration.between(p.timeStamp, now).getSeconds() < 10){
+                                    InetAddress host = InetAddress.getByName(p.location.split(":")[0]);
+                                    Integer port = Integer.valueOf(p.location.split(":")[1].trim());
+                                    for(Peer peer_info : peers){
+                                        if(Duration.between(peer_info.timeStamp, now).getSeconds() < 10){
+                                            byte[] toSend = ("peer"+peer_info.location).getBytes();
+                                            DatagramPacket packet = new DatagramPacket(toSend, toSend.length, host, port);
+                                            peerSock.send(packet);
+                                            System.out.println("Sent peer "+ peer_info.location + " to " + p.location);
+                                        }
+                                    }   
+                                } 
+                            }
                         }
+                        Thread.sleep(6000);
+
                     }
-                    
-                }
-                catch (Exception err){
-                    System.out.println("Error: "+ err);
+                    catch (Exception err){
+                        System.out.println("Error: "+ err);
+                    }
                 }
             }
         };
@@ -402,19 +413,14 @@ public class client {
      * @param args
      */
     public static void main(String[] args)
-	{
-		try (
-                // Starting a datagram socket
-                DatagramSocket peerSock = new DatagramSocket(UDP_PORT);
-			)
-		{
+	{              
+		try{
             ourLocation = InetAddress.getLocalHost().getHostAddress()+":"+UDP_PORT;
-            createUDPReceiveThread(peerSock);
             initiateRegistryContact(registryHost, registryPort);
-            while(!recieveStop){
-                sendPeerPackets(peerSock);
-                TimeUnit.SECONDS.sleep(6);
-            } 
+            // Starting a datagram socket
+            DatagramSocket peerSock = new DatagramSocket(UDP_PORT);
+            createUDPReceiveThread(peerSock);
+            sendPeerPackets(peerSock);   
 		}
 		catch(Exception err) {
             // Exception handling
