@@ -481,7 +481,8 @@ public class client {
             DatagramSocket peerSock = new DatagramSocket(UDP_PORT);
             createUDPReceiveThread(peerSock);
             sendPeerPackets(peerSock);
-            SnipSend snipSend = new SnipSend(peerSock, timeStamp, peers, ourLocation);   
+            SnipSend snipSend = new SnipSend(peerSock, timeStamp, peers, ourLocation);
+            snipSend.start();
 		}
 		catch(Exception err) {
             // Exception handling
