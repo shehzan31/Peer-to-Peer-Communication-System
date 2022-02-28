@@ -151,17 +151,19 @@ class initiateRegistryContact extends Thread{
     public int port;
     public static int UDP_PORT;
     public static ArrayList<Peer> peers;
+    public static ArrayList<Peer> peers_Reg;
     public static ArrayList<source> sources;
     public static ArrayList<Snip> snips;
     public static ArrayList<UDP_Peer_rcd> uPeer_rcds;
     public static ArrayList<UDP_Peer_sent> uPeer_sents;
 
-    public initiateRegistryContact(String h, int p, int udp, ArrayList<Peer> peers, ArrayList<source> sources, ArrayList<Snip> snips, 
+    public initiateRegistryContact(String h, int p, int udp, ArrayList<Peer> peers, ArrayList<Peer> peers_Reg, ArrayList<source> sources, ArrayList<Snip> snips, 
                                     ArrayList<UDP_Peer_rcd> uPeer_rcds, ArrayList<UDP_Peer_sent> uPeer_sents){
         this.host = h;
         this.port = p;
         this.UDP_PORT = udp;
         this.peers = peers;
+        this.peers_Reg = peers_Reg;
         this.sources = sources;
         this.snips = snips;
         this.uPeer_rcds = uPeer_rcds;
@@ -240,6 +242,7 @@ class initiateRegistryContact extends Thread{
                 if (!received){
                     Peer newPeer = new Peer(loc, now);
                     peers.add(newPeer);
+                    peers_Reg.add(newPeer);
                 }
                 // add peerto the local list of peers
                 for(Peer find:peers){
@@ -271,8 +274,8 @@ class initiateRegistryContact extends Thread{
     public static void sendReport(BufferedWriter writer){
         try{
             // Writes the number of peers followed by a newline character
-            writer.write(Integer.toString(peers.size())+"\n");
-            for(Peer p : peers){
+            writer.write(Integer.toString(peers_Reg.size())+"\n");
+            for(Peer p : peers_Reg){
                 // for each peer it reads, it send the peer followed by a new line character
                 writer.write(p.location+"\n");
             }
@@ -296,7 +299,7 @@ class initiateRegistryContact extends Thread{
             for(UDP_Peer_sent uPeer : uPeer_sents){
                 writer.write(uPeer.destination_location + " " + uPeer.location + " " + uPeer.timeReceived + "\n");
             }
-            writer.write(Integer.toString(snips.size()));
+            writer.write(Integer.toString(snips.size())+"\n");
             for(Snip s : snips){
                 writer.write(Integer.toString(s.timeStamp) + " " + s.content.trim() + " " + s.source_location.trim() + "\n");
             }
@@ -413,6 +416,7 @@ public class client {
 
     // master arraylist to store peers (no duplicates) and sources (class provided above)
     public static ArrayList<Peer> peers = new ArrayList<Peer>();
+    public static ArrayList<Peer> peers_Reg = new ArrayList<Peer>();
     public static ArrayList<source> sources = new ArrayList<source>();
     public static ArrayList<Snip> snips = new ArrayList<Snip>();
     public static ArrayList<UDP_Peer_rcd> udpPeersReceived = new ArrayList<UDP_Peer_rcd>();
@@ -430,11 +434,6 @@ public class client {
     
     public static String ourLocation;
     
-
-    
-
-    
-
     public static void shutDownProcedure(DatagramSocket peerSock){
         
         try{
@@ -576,11 +575,9 @@ public class client {
 	{              
 		try{
             ourLocation = InetAddress.getLocalHost().getHostAddress()+":"+UDP_PORT;
-            initiateRegistryContact initContact = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, sources, snips, udpPeersReceived, udpPeersSent);
+            initiateRegistryContact initContact = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, peers_Reg, sources, snips, udpPeersReceived, udpPeersSent);
             initContact.start();
 
-
-           
             // Starting a datagram socket
             DatagramSocket peerSock = new DatagramSocket(UDP_PORT);
             createUDPReceiveThread(peerSock);
@@ -591,7 +588,7 @@ public class client {
                 
             }
             snipSend.interrupt();
-            initiateRegistryContact initContact2 = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, sources, snips, udpPeersReceived, udpPeersSent);
+            initiateRegistryContact initContact2 = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, peers_Reg, sources, snips, udpPeersReceived, udpPeersSent);
             initContact2.start();
             
 		}
