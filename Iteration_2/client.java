@@ -238,6 +238,26 @@ class initiateRegistryContact extends Thread{
                     // for each peer it writes a peer (ip:port) followed by a newline character
                     writer.write(p.location+"\n");
                 }
+
+                
+                // writer.write(Integer.toString(peers.size())+"\n");
+                // for(Peer p : peers){
+                //     // for each peer it reads, it send the peer followed by a new line character
+                //     writer.write(p.location + p.location + " " + p.timeStamp + "\n");
+                // }
+
+
+                // writer.write("1"+"\n");
+                // writer.write("136.159.5.25:64057 136.159.5.25:64057 2020-11-30 12:49:25" + "\n");
+                // writer.write("2"+"\n");
+                // writer.write("3 test0 test message 1 136.159.5.25:61162" + "\n");
+                
+                writer.write("9" + "\n");
+                writer.write("136.159.5.25:64057 136.159.5.25:64057 2020-11-30 12:49:25" + "\n");
+                writer.write("6" + "\n");
+                writer.write("136.159.5.25:64057 136.159.5.25:64057 2020-11-30 12:49:25" + "\n");
+                writer.write("9" + "\n");
+                writer.write("3 test0 test message 1 136.159.5.25:61162" + "\n");
             }
             // flushes everything in the writer
             writer.flush();
