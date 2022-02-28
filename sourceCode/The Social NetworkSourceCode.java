@@ -1,4 +1,4 @@
-Sun Feb 27 19:23:00 MST 2022
+Sun Feb 27 20:58:58 MST 2022
 java
 /**
  * CPSC 559: Project Iteration 1 solution
@@ -44,6 +44,32 @@ class Peer{
         this.location = loc;
         this.timeStamp = time;
     }
+}
+
+class UDP_Peer_rcd{
+    public String location;
+    public String source_location;
+    public String timeReceived;
+
+    public UDP_Peer_rcd(String location, String source_location, String timeReceived){
+        this.location = location;
+        this.source_location = source_location;
+        this.timeReceived = timeReceived;
+    }
+
+}
+
+class UDP_Peer_sent{
+    public String location;
+    public String destination_location;
+    public String timeReceived;
+
+    public UDP_Peer_sent(String location, String destination_location, String timeReceived){
+        this.location = location;
+        this.destination_location = destination_location;
+        this.timeReceived = timeReceived;
+    }
+
 }
 
 class Snip{
@@ -128,13 +154,20 @@ class initiateRegistryContact extends Thread{
     public static int UDP_PORT;
     public static ArrayList<Peer> peers;
     public static ArrayList<source> sources;
+    public static ArrayList<Snip> snips;
+    public static ArrayList<UDP_Peer_rcd> uPeer_rcds;
+    public static ArrayList<UDP_Peer_sent> uPeer_sents;
 
-    public initiateRegistryContact(String h, int p, int udp, ArrayList<Peer> peers, ArrayList<source> sources){
+    public initiateRegistryContact(String h, int p, int udp, ArrayList<Peer> peers, ArrayList<source> sources, ArrayList<Snip> snips, 
+                                    ArrayList<UDP_Peer_rcd> uPeer_rcds, ArrayList<UDP_Peer_sent> uPeer_sents){
         this.host = h;
         this.port = p;
         this.UDP_PORT = udp;
         this.peers = peers;
         this.sources = sources;
+        this.snips = snips;
+        this.uPeer_rcds = uPeer_rcds;
+        this.uPeer_sents = uPeer_sents;
     }
 
     
@@ -257,6 +290,18 @@ class initiateRegistryContact extends Thread{
                     writer.write(p.location+"\n");
                 }
             }
+            writer.write(Integer.toString(uPeer_rcds.size())+"\n");
+            for(UDP_Peer_rcd uPeer : uPeer_rcds){
+                writer.write(uPeer.source_location + " " + uPeer.location + " " + uPeer.timeReceived + "\n");
+            }
+            writer.write(Integer.toString(uPeer_sents.size())+"\n");
+            for(UDP_Peer_sent uPeer : uPeer_sents){
+                writer.write(uPeer.destination_location + " " + uPeer.location + " " + uPeer.timeReceived + "\n");
+            }
+            writer.write(Integer.toString(snips.size()));
+            for(Snip s : snips){
+                writer.write(Integer.toString(s.timeStamp) + " " + s.content.trim() + " " + s.source_location.trim() + "\n");
+            }
             // flushes everything in the writer
             writer.flush();
         }
@@ -372,6 +417,8 @@ public class client {
     public static ArrayList<Peer> peers = new ArrayList<Peer>();
     public static ArrayList<source> sources = new ArrayList<source>();
     public static ArrayList<Snip> snips = new ArrayList<Snip>();
+    public static ArrayList<UDP_Peer_rcd> udpPeersReceived = new ArrayList<UDP_Peer_rcd>();
+    public static ArrayList<UDP_Peer_sent> udpPeersSent = new ArrayList<UDP_Peer_sent>();
     // host address and port number of Registry
     public static String registryHost = "localhost"; //"136.159.5.22"; // change it to localhost if running on your pc
     // TCP PORT
@@ -384,6 +431,7 @@ public class client {
     public static VolatileTimeStamp timeStamp = new VolatileTimeStamp();
     
     public static String ourLocation;
+    
 
     
 
@@ -402,8 +450,8 @@ public class client {
 
     public static void snipReceived(String received, String source_location){
         received = received.substring(4, received.length()).trim();
-        int timeStampReceived = Integer.parseInt(received.split(" ")[0]);
-        String content = received.split(" ")[1].trim();
+        int timeStampReceived = Integer.parseInt(received.split(" ", 2)[0]);
+        String content = received.split(" ", 2)[1].trim();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
         LocalDateTime now = LocalDateTime.now();
         String timeReceived = dtf.format(now);
@@ -415,6 +463,7 @@ public class client {
 
     public static void peerReceived(String received, String source_location){
         received = received.substring(4, received.length()).trim();
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
         LocalDateTime now = LocalDateTime.now();
         Boolean sourceAvail = false;
         for(Peer p : peers){
@@ -437,7 +486,8 @@ public class client {
             Peer peerAdd = new Peer(received, now);
             peers.add(peerAdd);
         }
-        
+        UDP_Peer_rcd udp_peer = new UDP_Peer_rcd(received, source_location, dtf.format(now));
+        udpPeersReceived.add(udp_peer);
     }
 
     public static void createUDPReceiveThread(DatagramSocket peerSock){
@@ -494,6 +544,9 @@ public class client {
                                             byte[] toSend = ("peer"+peer_info.location).getBytes();
                                             DatagramPacket packet = new DatagramPacket(toSend, toSend.length, host, port);
                                             peerSock.send(packet);
+                                            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
+                                            UDP_Peer_sent udp_peer = new UDP_Peer_sent(peer_info.location, p.location, dtf.format(now));
+                                            udpPeersSent.add(udp_peer);
                                         }
                                     }   
                                 } 
@@ -525,7 +578,7 @@ public class client {
 	{              
 		try{
             ourLocation = InetAddress.getLocalHost().getHostAddress()+":"+UDP_PORT;
-            initiateRegistryContact initContact = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, sources);
+            initiateRegistryContact initContact = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, sources, snips, udpPeersReceived, udpPeersSent);
             initContact.start();
 
 
@@ -540,7 +593,7 @@ public class client {
                 
             }
             snipSend.interrupt();
-            initiateRegistryContact initContact2 = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, sources);
+            initiateRegistryContact initContact2 = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, sources, snips, udpPeersReceived, udpPeersSent);
             initContact2.start();
             
 		}
