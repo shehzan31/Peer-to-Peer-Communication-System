@@ -71,7 +71,7 @@ class SnipSend extends Thread{
         this.ourLocation = loc;
     }
 
-    public void start(){
+    public void run(){
         try{
             Scanner keyboard = new Scanner(System.in);
             while(!Thread.currentThread().isInterrupted()){
@@ -103,42 +103,23 @@ class SnipSend extends Thread{
     }
 }
 
-// Client class - main class
-public class client {
+class initiateRegistryContact extends Thread{
 
-    // master arraylist to store peers (no duplicates) and sources (class provided above)
-    public static ArrayList<Peer> peers = new ArrayList<Peer>();
-    public static ArrayList<source> sources = new ArrayList<source>();
-    // host address and port number of Registry
-    public static String registryHost = "localhost"; //"136.159.5.22"; // change it to localhost if running on your pc
-    // TCP PORT
-    public static int registryPort = 55921;
-    // UDP port
-    public static int UDP_PORT = 33333;
-    // stop UDP
-    public static boolean recieveStop = false;
-    
+    public String host;
+    public int port;
+    public static int UDP_PORT;
+    public static ArrayList<Peer> peers;
+    public static ArrayList<source> sources;
 
-    public static String ourLocation;
-
-    /**
-     * Sends the team name through the BufferedWritter of the OutputStream in the socket connection.
-     * @param writer
-     */
-    public static void sendTeamName(BufferedWriter writer){
-        String teamName = "The Social Network";
-
-        try{
-            //writes then flushes
-            writer.write(teamName+"\n");
-            writer.flush();
-        }
-        catch(Exception err) {
-            //exception handling
-            System.out.println("Error: " + err.getMessage());
-            }
+    public initiateRegistryContact(String h, int p, int udp, ArrayList<Peer> peers, ArrayList<source> sources){
+        this.host = h;
+        this.port = p;
+        this.UDP_PORT = udp;
+        this.peers = peers;
+        this.sources = sources;
     }
 
+    
     /**
      * Sends the type of Language followed by a newline and then whole code base (this file) via reading 
      * one line at a time with a newline and followed by <end_of_code> (...) followed by a new line. Sending
@@ -281,6 +262,112 @@ public class client {
         }
     }
 
+    /**
+     * Sends the team name through the BufferedWritter of the OutputStream in the socket connection.
+     * @param writer
+     */
+    public static void sendTeamName(BufferedWriter writer){
+        String teamName = "The Social Network";
+
+        try{
+            //writes then flushes
+            writer.write(teamName+"\n");
+            writer.flush();
+        }
+        catch(Exception err) {
+            //exception handling
+            System.out.println("Error: " + err.getMessage());
+            }
+    }
+
+    public void run(){
+        try (
+                // Socket connection via host and port 
+                Socket clientSocket = new Socket(host, port);
+                // Buffered Reader and Buffered Writer for input and output streams on socket (to read and write to the socket)
+                BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+            )
+        {
+            System.out.println("Connecting to the Registry via TCP");
+            // while socket is open
+            Boolean open = true;
+            while(open){
+                // read response from the server
+                String response;
+                response = reader.readLine();
+                // upon the request switch
+                switch(response){
+                    // send team name
+                    case "get team name":
+                        System.out.println("Requesting team name");
+                        sendTeamName(writer);
+                        System.out.println("Sent team name");
+                        break;
+                    // send code base
+                    case "get code":
+                        System.out.println("Requesting code base");
+                        sendCode(writer);
+                        System.out.println("Sent code base");
+                        break;
+                    // receive request 
+                    case "receive peers":
+                        System.out.println("Receiving peers");
+                        receivePeers(reader, clientSocket);
+                        System.out.println("Received");
+                        break;
+                    // send report
+                    case "get report":
+                        System.out.println("Requesting report");
+                        sendReport(writer);
+                        System.out.println("Sent report");
+                        break;
+                    // get location
+                    case "get location":
+                        System.out.println("Requesting location");
+                        sendLocation(writer);
+                        System.out.println("Sent Location");
+                        break;
+                    // close request
+                    case "close":
+                        System.out.println("Requesting to close the socket");
+                        // change boolean value so connection gets closed
+                        open = false;
+                        break;
+                }
+            }
+            // close the socket
+            clientSocket.close();
+            System.out.println("Disconnected from the Registry via TCP");
+            
+        }
+        catch(Exception err){
+            System.out.println("Error: "+err);
+        }
+    }
+}
+
+// Client class - main class
+public class client {
+
+    // master arraylist to store peers (no duplicates) and sources (class provided above)
+    public static ArrayList<Peer> peers = new ArrayList<Peer>();
+    public static ArrayList<source> sources = new ArrayList<source>();
+    // host address and port number of Registry
+    public static String registryHost = "localhost"; //"136.159.5.22"; // change it to localhost if running on your pc
+    // TCP PORT
+    public static int registryPort = 55921;
+    // UDP port
+    public static int UDP_PORT = 33333;
+    // stop UDP
+    public static volatile boolean recieveStop = false;
+    
+    public static String ourLocation;
+
+    
+
+    
+
     public static void shutDownProcedure(DatagramSocket peerSock){
         
         try{
@@ -290,8 +377,6 @@ public class client {
         catch(Exception err){
             System.out.println("Error: " + err);
         }
-        
-        initiateRegistryContact(registryHost, registryPort);
     }
 
     public static void snipReceived(String received){
@@ -397,70 +482,7 @@ public class client {
     }
 
 
-    public static void initiateRegistryContact(String host, int port){
-        try (
-                // Socket connection via host and port 
-				Socket clientSocket = new Socket(host, port);
-                // Buffered Reader and Buffered Writer for input and output streams on socket (to read and write to the socket)
-                BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-            )
-        {
-            System.out.println("Connecting to the Registry via TCP");
-            // while socket is open
-            Boolean open = true;
-            while(open){
-                // read response from the server
-                String response;
-                response = reader.readLine();
-                // upon the request switch
-                switch(response){
-                    // send team name
-                    case "get team name":
-                        System.out.println("Requesting team name");
-                        sendTeamName(writer);
-                        System.out.println("Sent team name");
-                        break;
-                    // send code base
-                    case "get code":
-                        System.out.println("Requesting code base");
-                        sendCode(writer);
-                        System.out.println("Sent code base");
-                        break;
-                    // receive request 
-                    case "receive peers":
-                        System.out.println("Receiving peers");
-                        receivePeers(reader, clientSocket);
-                        System.out.println("Received");
-                        break;
-                    // send report
-                    case "get report":
-                        System.out.println("Requesting report");
-                        sendReport(writer);
-                        System.out.println("Sent report");
-                        break;
-                    // get location
-                    case "get location":
-                        System.out.println("Requesting location");
-                        sendLocation(writer);
-                        System.out.println("Sent Location");
-                        break;
-                    // close request
-                    case "close":
-                        System.out.println("Requesting to close the socket");
-                        // change boolean value so connection gets closed
-                        open = false;
-                        break;
-                }
-            }
-            // close the socket
-            clientSocket.close();
-            System.out.println("Disconnected from the Registry via TCP");
-        }
-        catch(Exception err){
-            System.out.println("Error: "+err);
-        }
-    }
+    
     
     /**
      * Main method to drive the whole client program, connects to the Registry
@@ -473,7 +495,10 @@ public class client {
 	{              
 		try{
             ourLocation = InetAddress.getLocalHost().getHostAddress()+":"+UDP_PORT;
-            initiateRegistryContact(registryHost, registryPort);
+            initiateRegistryContact initContact = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, sources);
+            initContact.start();
+
+
             VolatileTimeStamp timeStamp = new VolatileTimeStamp();
             // Starting a datagram socket
             DatagramSocket peerSock = new DatagramSocket(UDP_PORT);
@@ -482,10 +507,12 @@ public class client {
             SnipSend snipSend = new SnipSend(peerSock, timeStamp, peers, ourLocation);
             snipSend.start();
             while(!recieveStop){
-
+                
             }
-            System.out.println("Stopping keyboard");
             snipSend.interrupt();
+            initiateRegistryContact initContact2 = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, sources);
+            initContact2.start();
+            
 		}
 		catch(Exception err) {
             // Exception handling

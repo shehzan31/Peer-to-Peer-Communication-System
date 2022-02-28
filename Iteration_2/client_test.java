@@ -116,7 +116,7 @@ public class client_test {
     // UDP port
     public static int UDP_PORT = 44444;
     // stop UDP
-    public static boolean recieveStop = false;
+    public static volatile boolean recieveStop = false;
     
 
     public static String ourLocation;
