@@ -1,4 +1,4 @@
-Sun Feb 27 18:03:08 MST 2022
+Sun Feb 27 19:23:06 MST 2022
 java
 /**
  * CPSC 559: Project Iteration 1 solution
@@ -46,13 +46,29 @@ class Peer{
     }
 }
 
+class Snip{
+    
+    public int timeStamp;
+    public String content;
+    public String timeReceived;
+    public String source_location;
+
+    public Snip(int timeStamp, String content, String timeReceived, String source_location) {
+        this.timeStamp = timeStamp;
+        this.content = content;
+        this.timeReceived = timeReceived;
+        this.source_location = source_location;
+    }
+}
+
 class VolatileTimeStamp{
     private volatile int timeStamp = 0;
     public int getTimeStamp(){
         return timeStamp;
     }
-    public void setTimeStamp(int num){
+    public int setTimeStamp(int num){
         timeStamp = num;
+        return num;
     }
     public int incrementTimeStamp(){
         timeStamp++;
@@ -355,6 +371,7 @@ public class client {
     // master arraylist to store peers (no duplicates) and sources (class provided above)
     public static ArrayList<Peer> peers = new ArrayList<Peer>();
     public static ArrayList<source> sources = new ArrayList<source>();
+    public static ArrayList<Snip> snips = new ArrayList<Snip>();
     // host address and port number of Registry
     public static String registryHost = "localhost"; //"136.159.5.22"; // change it to localhost if running on your pc
     // TCP PORT
@@ -363,8 +380,9 @@ public class client {
     public static int UDP_PORT = 33333;
     // stop UDP
     public static volatile boolean recieveStop = false;
+
+    public static VolatileTimeStamp timeStamp = new VolatileTimeStamp();
     
-    public static initiateRegistryContact iContact;
     public static String ourLocation;
 
     
@@ -382,8 +400,17 @@ public class client {
         }
     }
 
-    public static void snipReceived(String received){
-        System.out.println(received.substring(4, received.length()).trim());
+    public static void snipReceived(String received, String source_location){
+        received = received.substring(4, received.length()).trim();
+        int timeStampReceived = Integer.parseInt(received.split(" ")[0]);
+        String content = received.split(" ")[1].trim();
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
+        LocalDateTime now = LocalDateTime.now();
+        String timeReceived = dtf.format(now);
+        timeStampReceived = timeStamp.setTimeStamp(Integer.max(timeStamp.getTimeStamp(), timeStampReceived)+1);
+        Snip snip = new Snip(timeStampReceived, content, timeReceived, source_location);
+        snips.add(snip);
+        System.out.println(Integer.toString(timeStampReceived) + " " + content + " " + timeReceived + " " + source_location);
     }
 
     public static void peerReceived(String received, String source_location){
@@ -435,7 +462,7 @@ public class client {
                                 shutDownProcedure(peerSock); 
                                 break;
                             case "snip":
-                                snipReceived(received);
+                                snipReceived(received, source_location);
                                 break;
                             case "peer":
                                 peerReceived(received, source_location);
@@ -502,25 +529,20 @@ public class client {
             initContact.start();
 
 
-            VolatileTimeStamp timeStamp = new VolatileTimeStamp();
+           
             // Starting a datagram socket
             DatagramSocket peerSock = new DatagramSocket(UDP_PORT);
             createUDPReceiveThread(peerSock);
-            System.out.println("0");
             sendPeerPackets(peerSock);
-            System.out.println("1");
             SnipSend snipSend = new SnipSend(peerSock, timeStamp, peers, ourLocation);
-            System.out.println("2");
             snipSend.start();
-            System.out.println("3");
             while(!recieveStop){
                 
             }
-            System.out.println("After while");
+            snipSend.interrupt();
             initiateRegistryContact initContact2 = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, sources);
             initContact2.start();
-            System.out.println("Stopping keyboard");
-            snipSend.interrupt();
+            
 		}
 		catch(Exception err) {
             // Exception handling
