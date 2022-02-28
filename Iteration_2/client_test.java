@@ -92,7 +92,10 @@ class SnipSend extends Thread{
                     }
                 }
             }
-            keyboard.close();
+            if(Thread.currentThread().isInterrupted()){
+                keyboard.close();
+                System.out.println("Keyboard is closed");
+            }
         }
         catch(Exception err){
 
@@ -282,6 +285,7 @@ public class client_test {
         
         try{
             peerSock.close();
+            recieveStop = true;
         }
         catch(Exception err){
             System.out.println("Error: " + err);
@@ -481,6 +485,7 @@ public class client_test {
 
             }
             try{
+                System.out.println("Thread Interuppted");
                 snipSend.interrupt();
             }
             catch(Exception err){
