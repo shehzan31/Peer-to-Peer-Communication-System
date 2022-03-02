@@ -1,4 +1,4 @@
-Sun Feb 27 22:53:10 MST 2022
+Tue Mar 01 21:23:46 MST 2022
 java
 /**
  * CPSC 559: Project Iteration 1 solution
@@ -268,6 +268,73 @@ class initiateRegistryContact extends Thread{
         
     }
 
+    /**Used Merge sort from https://www.geeksforgeeks.org/merge-sort/ */
+
+    public static void merge_snips(ArrayList<Snip> original, int left, int middle, int right){
+
+        //finding the sizes of the sub snips to be merged
+        int left_size = middle - left + 1;
+        int right_size = right - middle;
+
+        // Creating two temp sub snips
+        ArrayList<Snip> left_snips = new ArrayList<Snip>();
+        ArrayList<Snip> right_snips = new ArrayList<Snip>();
+
+        // filling temp sub snips with data from original
+        for(int i = 0; i < left_size; ++i){
+            left_snips.add(original.get(left+i));
+        }
+        for(int i = 0; i < right_size; ++i){
+            right_snips.add(original.get(middle+1+i));
+        }
+
+        // pointers in each lists
+        int left_pointer = 0;
+        int right_pointer = 0;
+        int original_pointer = left;
+
+        // Look up each element and merge
+        while(left_pointer < left_size && right_pointer < right_size){
+            if(left_snips.get(left_pointer).timeStamp <= right_snips.get(right_pointer).timeStamp){
+                original.set(original_pointer, left_snips.get(left_pointer));
+                left_pointer++;
+            }
+            else{
+                original.set(original_pointer, right_snips.get(right_pointer));
+                right_pointer++;
+            }
+            original_pointer++;
+        }
+
+        // add leftover points
+        while(left_pointer<left_size){
+            original.set(original_pointer, left_snips.get(left_pointer));
+            left_pointer++;
+            original_pointer++;
+        }
+        while(right_pointer<right_size){
+            original.set(original_pointer, right_snips.get(right_pointer));
+            right_pointer++;
+            original_pointer++;
+        }
+    }
+
+
+    public static void sort_snips(ArrayList<Snip> original, int left, int right){
+        
+        if(left < right){
+            // finding the middle index
+            int middle = left+((right-left)/2);
+
+            // recursive calls for each respective halfs
+            sort_snips(original, left, middle);
+            sort_snips(original, middle+1, right);
+
+            // merge these halfs
+            merge_snips(original, left, middle, right);
+        }
+    } 
+
     /**
      * Sends current list of peers followed by a report that indicates all sources of this 
      * peer list
@@ -301,6 +368,7 @@ class initiateRegistryContact extends Thread{
             for(UDP_Peer_sent uPeer : uPeer_sents){
                 writer.write(uPeer.destination_location + " " + uPeer.location + " " + uPeer.timeReceived + "\n");
             }
+            sort_snips(snips, 0, snips.size());
             writer.write(Integer.toString(snips.size())+"\n");
             for(Snip s : snips){
                 writer.write(Integer.toString(s.timeStamp) + " " + s.content.trim() + " " + s.source_location.trim() + "\n");
@@ -424,7 +492,7 @@ public class client {
     public static ArrayList<UDP_Peer_rcd> udpPeersReceived = new ArrayList<UDP_Peer_rcd>();
     public static ArrayList<UDP_Peer_sent> udpPeersSent = new ArrayList<UDP_Peer_sent>();
     // host address and port number of Registry
-    public static String registryHost = "localhost"; //"136.159.5.22"; // change it to localhost if running on your pc
+    public static String registryHost = "localhost";//"136.159.5.22"; // change it to localhost if running on your pc
     // TCP PORT
     public static int registryPort = 55921;
     // UDP port
@@ -454,7 +522,7 @@ public class client {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
         LocalDateTime now = LocalDateTime.now();
         String timeReceived = dtf.format(now);
-        timeStampReceived = timeStamp.setTimeStamp(Integer.max(timeStamp.getTimeStamp(), timeStampReceived)+1);
+        timeStamp.setTimeStamp(Integer.max(timeStamp.getTimeStamp(), timeStampReceived)+1);
         Snip snip = new Snip(timeStampReceived, content, timeReceived, source_location);
         snips.add(snip);
         System.out.println(Integer.toString(timeStampReceived) + " " + content + " " + timeReceived + " " + source_location);
