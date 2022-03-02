@@ -90,9 +90,8 @@ class VolatileTimeStamp{
     public int getTimeStamp(){
         return timeStamp;
     }
-    public int setTimeStamp(int num){
+    public void setTimeStamp(int num){
         timeStamp = num;
-        return num;
     }
     public int incrementTimeStamp(){
         timeStamp++;
@@ -129,7 +128,8 @@ class SnipSend extends Thread{
                             InetAddress host = InetAddress.getByName(p.location.split(":")[0]);
                             Integer port = Integer.valueOf(p.location.split(":")[1].trim());
                             DatagramPacket packet = new DatagramPacket(toSend, toSend.length, host, port);
-                            peerSock.send(packet);   
+                            peerSock.send(packet);
+                            System.out.println("Snip sent to " + p.location);   
                         } 
                     }
                 }
@@ -151,17 +151,19 @@ class initiateRegistryContact extends Thread{
     public int port;
     public static int UDP_PORT;
     public static ArrayList<Peer> peers;
+    public static ArrayList<Peer> peers_Reg;
     public static ArrayList<source> sources;
     public static ArrayList<Snip> snips;
     public static ArrayList<UDP_Peer_rcd> uPeer_rcds;
     public static ArrayList<UDP_Peer_sent> uPeer_sents;
 
-    public initiateRegistryContact(String h, int p, int udp, ArrayList<Peer> peers, ArrayList<source> sources, ArrayList<Snip> snips, 
+    public initiateRegistryContact(String h, int p, int udp, ArrayList<Peer> peers, ArrayList<Peer> peers_Reg, ArrayList<source> sources, ArrayList<Snip> snips, 
                                     ArrayList<UDP_Peer_rcd> uPeer_rcds, ArrayList<UDP_Peer_sent> uPeer_sents){
         this.host = h;
         this.port = p;
         this.UDP_PORT = udp;
         this.peers = peers;
+        this.peers_Reg = peers_Reg;
         this.sources = sources;
         this.snips = snips;
         this.uPeer_rcds = uPeer_rcds;
@@ -240,6 +242,7 @@ class initiateRegistryContact extends Thread{
                 if (!received){
                     Peer newPeer = new Peer(loc, now);
                     peers.add(newPeer);
+                    peers_Reg.add(newPeer);
                 }
                 // add peerto the local list of peers
                 for(Peer find:peers){
@@ -263,6 +266,65 @@ class initiateRegistryContact extends Thread{
         
     }
 
+    /**Used Merge sort from https://www.geeksforgeeks.org/merge-sort/ */
+
+    public static void merge_snips(ArrayList<Snip> original, ArrayList<Snip> left_snips, ArrayList<Snip> right_snips, int left_size, int right_size){
+
+        // pointers in each lists
+        int left_pointer = 0;
+        int right_pointer = 0;
+
+        original.clear();
+       
+
+        // Look up each element and merge
+        while(left_pointer < left_size && right_pointer < right_size){
+            if(left_snips.get(left_pointer).timeStamp <= right_snips.get(right_pointer).timeStamp){
+                original.add(left_snips.get(left_pointer));
+                left_pointer++;
+            }
+            else{
+                original.add(right_snips.get(right_pointer));
+                right_pointer++;
+            }
+        }
+
+        // add leftover points
+        while(left_pointer<left_size){
+            original.add(left_snips.get(left_pointer));
+            left_pointer++;
+        }
+        while(right_pointer<right_size){
+            original.add(right_snips.get(right_pointer));
+            right_pointer++;
+        }
+    }
+
+    public static void sort_snips(ArrayList<Snip> original, int size){
+        if(size >= 2){
+            int middle = size/2;
+
+            // Creating two temp sub snips
+            ArrayList<Snip> left_snips = new ArrayList<Snip>();
+            ArrayList<Snip> right_snips = new ArrayList<Snip>();
+
+            // filling temp sub snips with data from original
+            for(int i = 0; i < middle; i++){
+                left_snips.add(original.get(i));
+            }
+            for(int i = middle; i < size; ++i){
+                right_snips.add(original.get(i));
+            }
+
+            // recursive calls for each respective halfs
+            sort_snips(left_snips, middle);
+            sort_snips(right_snips, size-middle);
+
+            // merge these halfs
+            merge_snips(original, left_snips, right_snips, middle, size-middle);
+        }
+    }
+
     /**
      * Sends current list of peers followed by a report that indicates all sources of this 
      * peer list
@@ -271,8 +333,8 @@ class initiateRegistryContact extends Thread{
     public static void sendReport(BufferedWriter writer){
         try{
             // Writes the number of peers followed by a newline character
-            writer.write(Integer.toString(peers.size())+"\n");
-            for(Peer p : peers){
+            writer.write(Integer.toString(peers_Reg.size())+"\n");
+            for(Peer p : peers_Reg){
                 // for each peer it reads, it send the peer followed by a new line character
                 writer.write(p.location+"\n");
             }
@@ -296,7 +358,8 @@ class initiateRegistryContact extends Thread{
             for(UDP_Peer_sent uPeer : uPeer_sents){
                 writer.write(uPeer.destination_location + " " + uPeer.location + " " + uPeer.timeReceived + "\n");
             }
-            writer.write(Integer.toString(snips.size()));
+            sort_snips(snips, snips.size());
+            writer.write(Integer.toString(snips.size())+"\n");
             for(Snip s : snips){
                 writer.write(Integer.toString(s.timeStamp) + " " + s.content.trim() + " " + s.source_location.trim() + "\n");
             }
@@ -413,16 +476,15 @@ public class client_test {
 
     // master arraylist to store peers (no duplicates) and sources (class provided above)
     public static ArrayList<Peer> peers = new ArrayList<Peer>();
+    public static ArrayList<Peer> peers_Reg = new ArrayList<Peer>();
     public static ArrayList<source> sources = new ArrayList<source>();
     public static ArrayList<Snip> snips = new ArrayList<Snip>();
     public static ArrayList<UDP_Peer_rcd> udpPeersReceived = new ArrayList<UDP_Peer_rcd>();
     public static ArrayList<UDP_Peer_sent> udpPeersSent = new ArrayList<UDP_Peer_sent>();
     // host address and port number of Registry
-    public static String registryHost = "136.159.5.22"; // change it to localhost if running on your pc
+    public static String registryHost = "localhost"; //"136.159.5.22"; // change it to localhost if running on your pc
     // TCP PORT
     public static int registryPort = 55921;
-    // UDP port
-    public static int UDP_PORT = 44444;
     // stop UDP
     public static volatile boolean recieveStop = false;
 
@@ -430,11 +492,6 @@ public class client_test {
     
     public static String ourLocation;
     
-
-    
-
-    
-
     public static void shutDownProcedure(DatagramSocket peerSock){
         
         try{
@@ -453,7 +510,7 @@ public class client_test {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
         LocalDateTime now = LocalDateTime.now();
         String timeReceived = dtf.format(now);
-        timeStampReceived = timeStamp.setTimeStamp(Integer.max(timeStamp.getTimeStamp(), timeStampReceived)+1);
+        timeStamp.setTimeStamp(Integer.max(timeStamp.getTimeStamp(), timeStampReceived)+1);
         Snip snip = new Snip(timeStampReceived, content, timeReceived, source_location);
         snips.add(snip);
         System.out.println(Integer.toString(timeStampReceived) + " " + content + " " + timeReceived + " " + source_location);
@@ -575,14 +632,14 @@ public class client_test {
     public static void main(String[] args)
 	{              
 		try{
+            // Starting a datagram socket
+            DatagramSocket peerSock = new DatagramSocket();
+            int UDP_PORT = peerSock.getLocalPort();
             ourLocation = InetAddress.getLocalHost().getHostAddress()+":"+UDP_PORT;
-            initiateRegistryContact initContact = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, sources, snips, udpPeersReceived, udpPeersSent);
+            initiateRegistryContact initContact = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, peers_Reg, sources, snips, udpPeersReceived, udpPeersSent);
             initContact.start();
 
-
-           
-            // Starting a datagram socket
-            DatagramSocket peerSock = new DatagramSocket(UDP_PORT);
+            
             createUDPReceiveThread(peerSock);
             sendPeerPackets(peerSock);
             SnipSend snipSend = new SnipSend(peerSock, timeStamp, peers, ourLocation);
@@ -591,7 +648,7 @@ public class client_test {
                 
             }
             snipSend.interrupt();
-            initiateRegistryContact initContact2 = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, sources, snips, udpPeersReceived, udpPeersSent);
+            initiateRegistryContact initContact2 = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, peers_Reg, sources, snips, udpPeersReceived, udpPeersSent);
             initContact2.start();
             
 		}

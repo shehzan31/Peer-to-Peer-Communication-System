@@ -266,7 +266,7 @@ class initiateRegistryContact extends Thread{
         
     }
 
-    /**Used Merge sort from https://www.baeldung.com/java-merge-sort */
+    /**Used Merge sort from https://www.geeksforgeeks.org/merge-sort/ */
 
     public static void merge_snips(ArrayList<Snip> original, ArrayList<Snip> left_snips, ArrayList<Snip> right_snips, int left_size, int right_size){
 
@@ -391,7 +391,7 @@ class initiateRegistryContact extends Thread{
      * @param writer
      */
     public static void sendTeamName(BufferedWriter writer){
-        String teamName = "The Social Network";
+        String teamName = "test2";
 
         try{
             //writes then flushes
@@ -472,7 +472,7 @@ class initiateRegistryContact extends Thread{
 }
 
 // Client class - main class
-public class client {
+public class client_test2 {
 
     // master arraylist to store peers (no duplicates) and sources (class provided above)
     public static ArrayList<Peer> peers = new ArrayList<Peer>();
@@ -640,6 +640,7 @@ public class client {
             initiateRegistryContact initContact = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, peers_Reg, sources, snips, udpPeersReceived, udpPeersSent);
             initContact.start();
 
+            
             createUDPReceiveThread(peerSock);
             sendPeerPackets(peerSock);
             SnipSend snipSend = new SnipSend(peerSock, timeStamp, peers, ourLocation);
