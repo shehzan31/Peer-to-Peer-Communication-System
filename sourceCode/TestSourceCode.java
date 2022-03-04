@@ -1,4 +1,4 @@
-Tue Mar 01 22:47:20 MST 2022
+Thu Mar 03 15:59:16 MST 2022
 java
 /**
  * CPSC 559: Project Iteration 1 solution
@@ -268,7 +268,7 @@ class initiateRegistryContact extends Thread{
         
     }
 
-    /**Used Merge sort from https://www.geeksforgeeks.org/merge-sort/ */
+    /**Used Merge sort from https://www.baeldung.com/java-merge-sort */
 
     public static void merge_snips(ArrayList<Snip> original, ArrayList<Snip> left_snips, ArrayList<Snip> right_snips, int left_size, int right_size){
 

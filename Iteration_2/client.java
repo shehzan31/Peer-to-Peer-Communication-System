@@ -9,6 +9,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.Scanner;
 
 import java.time.format.DateTimeFormatter;
@@ -482,7 +483,7 @@ public class client {
     public static ArrayList<UDP_Peer_rcd> udpPeersReceived = new ArrayList<UDP_Peer_rcd>();
     public static ArrayList<UDP_Peer_sent> udpPeersSent = new ArrayList<UDP_Peer_sent>();
     // host address and port number of Registry
-    public static String registryHost = "localhost"; //"136.159.5.22"; // change it to localhost if running on your pc
+    public static String registryHost ="136.159.5.22"; // change it to localhost if running on your pc
     // TCP PORT
     public static int registryPort = 55921;
     // stop UDP
@@ -594,16 +595,21 @@ public class client {
                                 if(Duration.between(p.timeStamp, now).getSeconds() < 10){
                                     InetAddress host = InetAddress.getByName(p.location.split(":")[0]);
                                     Integer port = Integer.valueOf(p.location.split(":")[1].trim());
-                                    for(Peer peer_info : peers){
-                                        if(Duration.between(peer_info.timeStamp, now).getSeconds() < 10){
-                                            byte[] toSend = ("peer"+peer_info.location).getBytes();
+                                    Boolean sent = false;
+                                    while(!sent){
+                                        Random rand = new Random();
+                                        Peer peer = peers.get(rand.nextInt(peers.size()));
+                                        if(Duration.between(peer.timeStamp, now).getSeconds() < 10){
+                                            byte[] toSend = ("peer"+peer.location).getBytes();
                                             DatagramPacket packet = new DatagramPacket(toSend, toSend.length, host, port);
                                             peerSock.send(packet);
                                             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
-                                            UDP_Peer_sent udp_peer = new UDP_Peer_sent(peer_info.location, p.location, dtf.format(now));
+                                            UDP_Peer_sent udp_peer = new UDP_Peer_sent(peer.location, p.location, dtf.format(now));
                                             udpPeersSent.add(udp_peer);
+                                            sent = true;
+                                            System.out.println("Sent peer " + peer.location + " to " + p.location);
                                         }
-                                    }   
+                                    }  
                                 } 
                             }
                         }
