@@ -546,6 +546,8 @@ public class client {
     public static int registryPort = 55921;
     // stop UDP
     public static volatile boolean recieveStop = false;
+    public static volatile boolean recieveStop2 = false;
+    public static int counter = 0; 
     //Timestamp to organize the snippets and peers
     public static VolatileTimeStamp timeStamp = new VolatileTimeStamp();
     //the current location 
@@ -570,14 +572,13 @@ public class client {
 
         }
         
-
-        try{
-            peerSock.close();
-            recieveStop = true;
-        }
-        catch(Exception err){
-            System.out.println("Error: " + err);
-        }
+        // try{
+        //     peerSock.close();
+        //     recieveStop = true;
+        // }
+        // catch(Exception err){
+        //     System.out.println("Error: " + err);
+        // }
     }
 
     /**
@@ -651,7 +652,14 @@ public class client {
             public void run(){
             
                 while(!recieveStop){
+
+                try{
                     byte[] buf = new byte[256];
+                    if(counter>0){
+                        
+                        peerSock.setSoTimeout(11000);
+                    }
+ 
                     DatagramPacket pack = new DatagramPacket(buf, buf.length);
                     try{
                         peerSock.receive(pack);
@@ -668,8 +676,11 @@ public class client {
                         switch(first4char){
                             case "stop":
                                 System.out.println("Received 'stop' from the registry");
-                                recieveStop = true;
+                                counter = counter + 1;
                                 shutDownProcedure(peerSock, udpHost, source_port); 
+                                recieveStop2 = true;
+                                initiateRegistryContact initContact2 = new initiateRegistryContact(registryHost, registryPort, peerSock.getLocalPort(), peers, peers_Reg, sources, snips, udpPeersReceived, udpPeersSent);
+                                initContact2.start();
                                 break;
                             case "snip":
                                 snipReceived(received, source_location);
@@ -679,9 +690,16 @@ public class client {
                                 break;
                         }
                     }
-                    catch(Exception err){
+                    catch (SocketTimeoutException e) {
+                        recieveStop = true;
+                        peerSock.close();
+                        System.out.println("timeout and socket closed");
+                    }
+                }   catch(Exception err){
                         System.out.println("Error: "+ err);
-                    } 
+                    }
+                
+                    
                 }
             }
         };
@@ -759,12 +777,12 @@ public class client {
             sendPeerPackets(peerSock);
             SnipSend snipSend = new SnipSend(peerSock, timeStamp, peers, ourLocation);
             snipSend.start();
-            while(!recieveStop){
+            while(!recieveStop2){
                 
             }
             snipSend.interrupt();
-            initiateRegistryContact initContact2 = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, peers_Reg, sources, snips, udpPeersReceived, udpPeersSent);
-            initContact2.start();
+            // initiateRegistryContact initContact2 = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, peers_Reg, sources, snips, udpPeersReceived, udpPeersSent);
+            // initContact2.start();
             
 		}
 		catch(Exception err) {

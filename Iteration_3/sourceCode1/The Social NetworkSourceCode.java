@@ -1,4 +1,4 @@
-Mon Mar 21 20:34:16 MDT 2022
+Wed Mar 23 19:47:01 MDT 2022
 java
 /**
  * CPSC 559: Project Iteration 1 solution
@@ -543,7 +543,7 @@ public class client {
     public static ArrayList<UDP_Peer_rcd> udpPeersReceived = new ArrayList<UDP_Peer_rcd>();
     public static ArrayList<UDP_Peer_sent> udpPeersSent = new ArrayList<UDP_Peer_sent>();
     // host address and port number of Registry
-    public static String registryHost = "localhost";//"136.159.5.22"; // change it to localhost if running on your pc
+    public static String registryHost ="localhost";//"136.159.5.22"; // change it to localhost if running on your pc
     // TCP PORT
     public static int registryPort = 55921;
     // stop UDP
@@ -557,22 +557,8 @@ public class client {
      * The shut down procedure is a function which closes the datagram socket to send the peers. 
      * @param peerSock
      */
-    public static void shutDownProcedure(DatagramSocket peerSock, InetAddress udpHost,int source_port){
-
-        String teamName = "The Social Network";
-
-        byte[] toSend = ("ack" + teamName).getBytes();
-        DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
-
-        try{
-            peerSock.send(packet);
-        }
-
-        catch(Exception err){
-
-        }
+    public static void shutDownProcedure(DatagramSocket peerSock){
         
-
         try{
             peerSock.close();
             recieveStop = true;
@@ -651,7 +637,6 @@ public class client {
     public static void createUDPReceiveThread(DatagramSocket peerSock){
         Thread t = new Thread() {
             public void run(){
-            
                 while(!recieveStop){
                     byte[] buf = new byte[256];
                     DatagramPacket pack = new DatagramPacket(buf, buf.length);
@@ -661,9 +646,6 @@ public class client {
                         String source_location = ((InetSocketAddress) pack.getSocketAddress()).getHostString() + ":" + Integer.toString(source_port);
                         String received = new String(buf);
                         String first4char = null;
-                        
-                        InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
-
                         if(received.length() > 4){
                             first4char = received.substring(0, 4);
                         }
@@ -671,7 +653,7 @@ public class client {
                             case "stop":
                                 System.out.println("Received 'stop' from the registry");
                                 recieveStop = true;
-                                shutDownProcedure(peerSock, udpHost, source_port); 
+                                shutDownProcedure(peerSock); 
                                 break;
                             case "snip":
                                 snipReceived(received, source_location);

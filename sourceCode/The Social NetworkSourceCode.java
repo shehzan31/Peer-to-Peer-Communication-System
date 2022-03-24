@@ -1,4 +1,4 @@
-Thu Mar 03 15:59:16 MST 2022
+Wed Mar 23 19:19:09 MDT 2022
 java
 /**
  * CPSC 559: Project Iteration 1 solution
@@ -11,6 +11,7 @@ java
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.Scanner;
 
 import java.time.format.DateTimeFormatter;
@@ -20,7 +21,10 @@ import java.time.LocalDateTime;
 
 
 
-// source class
+/**
+ * Source Class
+ * This class is an identifier for a source, which contains its own location, the time a peer was received and the peers it contains
+ */
 class source{
     
     // local variables storing location (ip:port), time stamp, array lst of peers received from this source 
@@ -36,21 +40,29 @@ class source{
     }
 }
 
+/**
+ * Peer class used to define a given peer. A peer is classified by its location and timestamp. 
+ */
 class Peer{
+    //local variables storing location (ip:port) and time stamp for each respective peer
     public String location;
     public LocalDateTime timeStamp; 
 
+    //Constructor storing all the values
     public Peer(String loc, LocalDateTime time){
         this.location = loc;
         this.timeStamp = time;
     }
 }
 
+//UDP Peers Received class: Defines a peer which was received via UDP
 class UDP_Peer_rcd{
+    //local variables storing location (ip:port), the location of the source (ip:port) and the time which the peer was received at
     public String location;
     public String source_location;
     public String timeReceived;
 
+    //Constructor storing all the values
     public UDP_Peer_rcd(String location, String source_location, String timeReceived){
         this.location = location;
         this.source_location = source_location;
@@ -58,12 +70,13 @@ class UDP_Peer_rcd{
     }
 
 }
-
+//UDP Peers Sent class: Defines a peer which was sent via UDP
 class UDP_Peer_sent{
+    //local variables storing location (ip:port), the location of the destination (ip:port) and the time which the peer was received at
     public String location;
     public String destination_location;
     public String timeReceived;
-
+    //Constructor storing all the values
     public UDP_Peer_sent(String location, String destination_location, String timeReceived){
         this.location = location;
         this.destination_location = destination_location;
@@ -72,13 +85,22 @@ class UDP_Peer_sent{
 
 }
 
+/**
+ * Snippet Class
+ * This class defines a snippet, using the time it was received, its unique time stamp, the content which it contains
+ * and the source which the snip was sent from
+ */
 class Snip{
-    
+   /*
+   local variables storing the timestamp of the snippet, the content which the snippet contains
+   the location of the source (ip:port) and the time which the peer was received at
+   */ 
     public int timeStamp;
     public String content;
     public String timeReceived;
     public String source_location;
 
+    //Constructor to store all values
     public Snip(int timeStamp, String content, String timeReceived, String source_location) {
         this.timeStamp = timeStamp;
         this.content = content;
@@ -87,21 +109,42 @@ class Snip{
     }
 }
 
+/**
+ * Volatile Time Stamp Class is used to store and change a dynamic volatile time stamp
+ */
+
 class VolatileTimeStamp{
+    //local variable stored is a volatile timestamp that may change based on functions
     private volatile int timeStamp = 0;
+
+    /**
+    *Returns the current Time Stamp which is stored
+    */
     public int getTimeStamp(){
         return timeStamp;
     }
+    /**
+    *Changes the current Time Stamp value to number given in the argument
+    * @param num 
+    */
     public void setTimeStamp(int num){
         timeStamp = num;
     }
+    /**
+     * Increments the timestamp by 1 when run
+     */
     public int incrementTimeStamp(){
         timeStamp++;
         return timeStamp;
     }
 }
 
+/**
+ * Sending a Snippet class sends snippets from the command line using the udp socket, a timestamp,
+ * the peer list and the current location
+ */
 class SnipSend extends Thread{
+    //local variables store the Datagram socket to send through, a volatile time stamp, array list of the current peers and the current location
     public DatagramSocket peerSock;
     public VolatileTimeStamp timeStamp;
     public ArrayList<Peer> peers;
@@ -114,6 +157,11 @@ class SnipSend extends Thread{
         this.ourLocation = loc;
     }
 
+    /**
+     * Run function to execute sending a Snippet. The function sends the current snippet using a datagram packet to all peers. 
+     * The snip is taken via keyboard, gets a current timestamp attached to it and is converted to bytes.
+     * Loop through each peer which is not the current peer and send the sdnip with the value of the location. 
+     */
     public void run(){
         try{
             Scanner keyboard = new Scanner(System.in);
@@ -147,8 +195,17 @@ class SnipSend extends Thread{
     }
 }
 
+/**
+ * Initiating the connection with the registry Class
+ * The purpose of this class is to start the connection with the registry and make a thread for this initial connection. 
+ */
 class initiateRegistryContact extends Thread{
 
+    /**
+     * local variables are the host number to send to, port number to send to, the UDP port for the peers and snips,    
+     * the list of current peers, the list of peers given from the registry, the list of sources where the peers came from, 
+     * the list of snippets and two lists for the peers which were received and sent via UDP. 
+    */
     public String host;
     public int port;
     public static int UDP_PORT;
@@ -159,6 +216,8 @@ class initiateRegistryContact extends Thread{
     public static ArrayList<UDP_Peer_rcd> uPeer_rcds;
     public static ArrayList<UDP_Peer_sent> uPeer_sents;
 
+
+    //Constructor for storing variables
     public initiateRegistryContact(String h, int p, int udp, ArrayList<Peer> peers, ArrayList<Peer> peers_Reg, ArrayList<source> sources, ArrayList<Snip> snips, 
                                     ArrayList<UDP_Peer_rcd> uPeer_rcds, ArrayList<UDP_Peer_sent> uPeer_sents){
         this.host = h;
@@ -484,27 +543,53 @@ public class client {
     public static ArrayList<UDP_Peer_rcd> udpPeersReceived = new ArrayList<UDP_Peer_rcd>();
     public static ArrayList<UDP_Peer_sent> udpPeersSent = new ArrayList<UDP_Peer_sent>();
     // host address and port number of Registry
-    public static String registryHost = "localhost"; //"136.159.5.22"; // change it to localhost if running on your pc
+    public static String registryHost = "localhost";//"136.159.5.22"; // change it to localhost if running on your pc
     // TCP PORT
     public static int registryPort = 55921;
     // stop UDP
     public static volatile boolean recieveStop = false;
-
+    public static volatile boolean recieveStop2 = false;
+    public static int counter = 0; 
+    //Timestamp to organize the snippets and peers
     public static VolatileTimeStamp timeStamp = new VolatileTimeStamp();
-    
+    //the current location 
     public static String ourLocation;
     
-    public static void shutDownProcedure(DatagramSocket peerSock){
-        
+    /**
+     * The shut down procedure is a function which closes the datagram socket to send the peers. 
+     * @param peerSock
+     */
+    public static void shutDownProcedure(DatagramSocket peerSock, InetAddress udpHost,int source_port){
+
+        String teamName = "The Social Network";
+
+        byte[] toSend = ("ack" + teamName).getBytes();
+        DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
+
         try{
-            peerSock.close();
-            recieveStop = true;
+            peerSock.send(packet);
         }
+
         catch(Exception err){
-            System.out.println("Error: " + err);
+
         }
+        
+        // try{
+        //     peerSock.close();
+        //     recieveStop = true;
+        // }
+        // catch(Exception err){
+        //     System.out.println("Error: " + err);
+        // }
     }
 
+    /**
+     * Snip Received function changes the global variable received to the new string and location that were passed
+     * in the arguments. 
+     * It then takes the current snippet and adds it to the list of snippets. 
+     * @param received
+     * @param source_location
+     */
     public static void snipReceived(String received, String source_location){
         received = received.substring(4, received.length()).trim();
         int timeStampReceived = Integer.parseInt(received.split(" ", 2)[0]);
@@ -518,6 +603,17 @@ public class client {
         System.out.println(Integer.toString(timeStampReceived) + " " + content + " " + timeReceived + " " + source_location);
     }
 
+    /**
+     * Peers Received function overwrites the received global variable to the string that was passed down in the argument
+     * Looping through every peer, we check whether or no th the peer is part of the same source and if it is, we 
+     * set the timestamp to now and the boolean sourceAvail to true
+     * The Source Avail boolean is used to check if a peer location matches the source location
+     * If it does not, then we add the source as a peer
+     * Peer avail checks if the peer is already in the list, if not then we add the peer to the list of peers
+     * We also add the peer to the list of udp peers which were received. 
+     * @param received
+     * @param source_location
+     */
     public static void peerReceived(String received, String source_location){
         received = received.substring(4, received.length()).trim();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
@@ -547,11 +643,25 @@ public class client {
         udpPeersReceived.add(udp_peer);
     }
 
+    /**
+     * The UDP receive thread makes a new thread to check the packet which was received via UDP. 
+     * in this packet we receive the port, source and received string. 
+     * The first 4 characters will determine what the received packet was a stop case, snippet or peer. 
+     * @param peerSock
+     */
     public static void createUDPReceiveThread(DatagramSocket peerSock){
         Thread t = new Thread() {
             public void run(){
+            
                 while(!recieveStop){
+
+                try{
                     byte[] buf = new byte[256];
+                    if(counter>0){
+                        
+                        peerSock.setSoTimeout(11000);
+                    }
+ 
                     DatagramPacket pack = new DatagramPacket(buf, buf.length);
                     try{
                         peerSock.receive(pack);
@@ -559,14 +669,20 @@ public class client {
                         String source_location = ((InetSocketAddress) pack.getSocketAddress()).getHostString() + ":" + Integer.toString(source_port);
                         String received = new String(buf);
                         String first4char = null;
+                        
+                        InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
+
                         if(received.length() > 4){
                             first4char = received.substring(0, 4);
                         }
                         switch(first4char){
                             case "stop":
                                 System.out.println("Received 'stop' from the registry");
-                                recieveStop = true;
-                                shutDownProcedure(peerSock); 
+                                counter = counter + 1;
+                                shutDownProcedure(peerSock, udpHost, source_port); 
+                                recieveStop2 = true;
+                                initiateRegistryContact initContact2 = new initiateRegistryContact(registryHost, registryPort, peerSock.getLocalPort(), peers, peers_Reg, sources, snips, udpPeersReceived, udpPeersSent);
+                                initContact2.start();
                                 break;
                             case "snip":
                                 snipReceived(received, source_location);
@@ -576,15 +692,27 @@ public class client {
                                 break;
                         }
                     }
-                    catch(Exception err){
+                    catch (SocketTimeoutException e) {
+                        recieveStop = true;
+                        peerSock.close();
+                        System.out.println("timeout and socket closed");
+                    }
+                }   catch(Exception err){
                         System.out.println("Error: "+ err);
-                    } 
+                    }
+                
+                    
                 }
             }
         };
         t.start();
     }
 
+    /**
+     * Sending the peer packets function creates a new thread, which checks for all peers that is not a current peer, gives it a timestamp, 
+     * and sends the peer through the udp socket. It also adds the peer to the list of udp peers with the date. 
+     * @param peerSock
+     */
     public static void sendPeerPackets(DatagramSocket peerSock){
         Thread t = new Thread(){
             public void run(){
@@ -596,16 +724,21 @@ public class client {
                                 if(Duration.between(p.timeStamp, now).getSeconds() < 10){
                                     InetAddress host = InetAddress.getByName(p.location.split(":")[0]);
                                     Integer port = Integer.valueOf(p.location.split(":")[1].trim());
-                                    for(Peer peer_info : peers){
-                                        if(Duration.between(peer_info.timeStamp, now).getSeconds() < 10){
-                                            byte[] toSend = ("peer"+peer_info.location).getBytes();
+                                    Boolean sent = false;
+                                    while(!sent){
+                                        Random rand = new Random();
+                                        Peer peer = peers.get(rand.nextInt(peers.size()));
+                                        if(Duration.between(peer.timeStamp, now).getSeconds() < 10 || peer.location.equals(ourLocation)){
+                                            byte[] toSend = ("peer"+peer.location).getBytes();
                                             DatagramPacket packet = new DatagramPacket(toSend, toSend.length, host, port);
                                             peerSock.send(packet);
                                             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
-                                            UDP_Peer_sent udp_peer = new UDP_Peer_sent(peer_info.location, p.location, dtf.format(now));
+                                            UDP_Peer_sent udp_peer = new UDP_Peer_sent(peer.location, p.location, dtf.format(now));
                                             udpPeersSent.add(udp_peer);
+                                            sent = true;
+                                            System.out.println("Sent peer " + peer.location + " to " + p.location);
                                         }
-                                    }   
+                                    }  
                                 } 
                             }
                         }
@@ -646,12 +779,12 @@ public class client {
             sendPeerPackets(peerSock);
             SnipSend snipSend = new SnipSend(peerSock, timeStamp, peers, ourLocation);
             snipSend.start();
-            while(!recieveStop){
+            while(!recieveStop2){
                 
             }
             snipSend.interrupt();
-            initiateRegistryContact initContact2 = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, peers_Reg, sources, snips, udpPeersReceived, udpPeersSent);
-            initContact2.start();
+            // initiateRegistryContact initContact2 = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, peers_Reg, sources, snips, udpPeersReceived, udpPeersSent);
+            // initContact2.start();
             
 		}
 		catch(Exception err) {

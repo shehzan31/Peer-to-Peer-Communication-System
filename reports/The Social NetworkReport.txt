@@ -156,3 +156,13 @@ Num of peers received: 1
 10.0.0.177:60491 10.0.0.177:60491 2022/03/03 15:59:15
 1 snippets:
 1 Hello 10.0.0.177:60491
+Wed Mar 23 19:19:09 MDT 2022
+1 in list: 192.168.1.79:57530 
+1 sources:
+Source: 192.168.1.79:55921
+Date: 2022/03/23 19:19:03
+Num of peers received: 1
+192.168.1.79:57530 
+0 single peers received:
+0 sends:
+0 snippets:
