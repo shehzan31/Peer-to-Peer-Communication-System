@@ -1,8 +1,9 @@
 package registry;
 public class Peer {
 	String address;
-	int port;
+	private int port;
 	String teamName;
+	boolean acked = false;
 	
 	Peer[] peersSent = null;
 	
@@ -10,6 +11,17 @@ public class Peer {
 		return teamName;
 	}
 	public String toString() {
-		return key() + " " + address + ":" + port;
+		return key() + " " + address + ":" + getPort();
+	}
+	int getPort() {
+		return port;
+	}
+	void setPort(int port) {
+		if (port > 0) {
+			this.port = port;
+		} else {
+			port = 59921;
+		}
+		
 	}
 }

@@ -1,7 +1,11 @@
 package registry;
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -54,6 +58,7 @@ import java.util.logging.SimpleFormatter;
  */
 class RequestProcessor implements Runnable {
 	private final static Logger LOGGER = Logger.getLogger(RequestProcessor.class.getName());
+	private static int runCounter = 1;
 
 	/** The connection that we are processing */
 	private Socket peerSocket = null;
@@ -68,6 +73,8 @@ class RequestProcessor implements Runnable {
 	/** The registry that received the connection request: it handles the list of peers */
 	private Registry source = null;
 	
+	private String codeDirectory = "sourceCode" + runCounter;
+	private String reportDirectory = "reports" + runCounter;
 	/**
 	 * Setup up the logger to store logging messages in the file 'registryLogger.log' in the
 	 * current directory.
@@ -94,7 +101,7 @@ class RequestProcessor implements Runnable {
 		source = aSource;
 		out = new BufferedWriter(new OutputStreamWriter(peerSocket.getOutputStream()));
 		in = new BufferedReader(new InputStreamReader(peerSocket.getInputStream()));
-
+		
 	}
 	
 	/**
@@ -119,7 +126,7 @@ class RequestProcessor implements Runnable {
 				getReport(addedPeer);
 			}
 			/* ------------- End updated code -----*/
-			closePeer();
+			closePeer(addedPeer);
 		} catch (IOException e) {
 			log(Level.WARNING, "Problem processing socket.", e);
 		}
@@ -135,13 +142,46 @@ class RequestProcessor implements Runnable {
 	 * @throws IOException if the connection with the peer is broken unexpectedly or we are unable to 
 	 * send a close command to the peer.
 	 */
-	private void closePeer() throws IOException {
+	private void closePeer(Peer addedPeer) throws IOException {
 		assert(peerSocket != null);
 		out.write("close\n");
+		sendFileContent(codeDirectory + "/" + addedPeer.teamName + "SourceCode." + peerLanguageExtension);
+		sendFileContent(reportDirectory + "/" + addedPeer.teamName + "Report.txt");
 		out.flush();
 		peerSocket.close();
 	}
 
+	/**
+	 * Send content of text file along output channel.  To indicate the end of the file, the stream will
+	 * be ended with <newline>...<newline>
+	 * @param filename name of the text file to send along the output stream
+	 */
+	private void sendFileContent(String filename) {
+		BufferedReader reader = null;
+		try {
+			try {
+				reader = new BufferedReader(new FileReader(filename));
+				String line = reader.readLine();
+				while (line != null) {
+					out.write(line + "\n");
+					line = reader.readLine();
+				}
+			} catch (FileNotFoundException e) {
+				out.write("file not found: " + filename);
+			}
+			out.write("\n...\n");
+			if (reader != null) reader.close();		
+		} catch (IOException ioe) {
+			// do nothing if there was an error.  Close the file and return
+			try {
+				if (reader != null) reader.close();
+			} catch (IOException e) {
+				// can't close the file, nothing more to do.
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	/*
 	 * Sends a list of peers in the system along the socket.  If the current peer object
 	 * that we created for this channel already contains such a list of peers, we'll send this 
@@ -189,7 +229,7 @@ class RequestProcessor implements Runnable {
 		
 		// Send each peer along the channel in the format <ip>:<port><newline>
 		for (Peer p : peersToSend) {
-			String toSend = p.address + ":" + p.port;
+			String toSend = p.address + ":" + p.getPort();
 			out.write(toSend + "\n");
 			logMessage.append(toSend + " ");
 		}
@@ -288,7 +328,6 @@ class RequestProcessor implements Runnable {
 	 * 'SourceCode.txt'.
 	 */
 	private void createCodeFile(String teamName, String code) throws IOException {
-		String codeDirectory = "sourceCode";
 		
 		// Create directory for storing source code if it does not exist
 		File dir = new File(codeDirectory);
@@ -304,7 +343,7 @@ class RequestProcessor implements Runnable {
 		// log that we created the code file.
 		log(Level.INFO, "code " + codeDirectory);
 	}
-
+	
 	/**
 	 * Create a peer object for the current connection.  Request the information from the peer
 	 * along the channel with the peer and store this information.  Information requested: 
@@ -327,7 +366,7 @@ class RequestProcessor implements Runnable {
 		String[] addressInfo = location.split(":");
 		if (addressInfo.length >=2) {
 			peerToAdd.address = addressInfo[0];
-			peerToAdd.port = Integer.parseInt(addressInfo[1]);
+			peerToAdd.setPort(Integer.parseInt(addressInfo[1]));
 		}
 		peerToAdd.teamName = teamName;
 		source.addPeer(peerToAdd);
@@ -354,8 +393,6 @@ class RequestProcessor implements Runnable {
 		// request the report
 		out.write("get report\n");
 		out.flush();
-
-		String reportDirectory = "reports";
 
 		// create directory for storing reports if it doesn't exist
 		File dir = new File(reportDirectory);
@@ -609,4 +646,10 @@ class RequestProcessor implements Runnable {
 							message;
 		LOGGER.log(level, logMessage, e);
 	}
+	
+	public static void nextRun() {
+		LOGGER.log(Level.INFO, "------- RESTARTED SERVER --------------");
+		runCounter++;
+	}
+
 }

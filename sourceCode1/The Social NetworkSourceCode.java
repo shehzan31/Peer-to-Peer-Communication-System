@@ -1,3 +1,5 @@
+Fri Mar 25 15:18:34 MDT 2022
+java
 /**
  * CPSC 559: Project Iteration 1 solution
  * Client Class which connects with the Registry via TCP Protocol and interacts as described in the rubric
@@ -542,7 +544,7 @@ public class client {
     public static ArrayList<UDP_Peer_rcd> udpPeersReceived = new ArrayList<UDP_Peer_rcd>();
     public static ArrayList<UDP_Peer_sent> udpPeersSent = new ArrayList<UDP_Peer_sent>();
     // host address and port number of Registry
-    public static String registryHost = "136.159.5.22"; // 136.159.5.22:55921change it to localhost if running on your pc
+    public static String registryHost = "localhost";//"136.159.5.22"; // change it to localhost if running on your pc
     // TCP PORT
     public static int registryPort = 55921;
     // stop UDP
@@ -792,3 +794,4 @@ public class client {
 		}
 	}
 }
+
