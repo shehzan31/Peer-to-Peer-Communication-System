@@ -178,3 +178,133 @@ Num of peers received: 1
 0 single peers received:
 0 sends:
 0 snippets:
+Thu Mar 24 19:18:02 MDT 2022
+1 in list: 192.168.1.79:56448 
+1 sources:
+Source: 192.168.1.79:55921
+Date: 2022/03/24 19:17:56
+Num of peers received: 1
+192.168.1.79:56448 
+0 single peers received:
+0 sends:
+0 snippets:
+Thu Mar 24 19:18:12 MDT 2022
+1 in list: 192.168.1.79:56448 
+1 sources:
+Source: 192.168.1.79:55921
+Date: 2022/03/24 19:17:56
+Num of peers received: 1
+192.168.1.79:56448 
+0 single peers received:
+0 sends:
+0 snippets:
+Thu Mar 24 19:18:22 MDT 2022
+1 in list: 192.168.1.79:56448 
+1 sources:
+Source: 192.168.1.79:55921
+Date: 2022/03/24 19:17:56
+Num of peers received: 1
+192.168.1.79:56448 
+0 single peers received:
+0 sends:
+0 snippets:
+Thu Mar 24 19:19:37 MDT 2022
+1 in list: 192.168.1.79:51396 
+1 sources:
+Source: 192.168.1.79:55921
+Date: 2022/03/24 19:19:31
+Num of peers received: 1
+192.168.1.79:51396 
+0 single peers received:
+0 sends:
+0 snippets:
+Thu Mar 24 19:19:47 MDT 2022
+1 in list: 192.168.1.79:51396 
+1 sources:
+Source: 192.168.1.79:55921
+Date: 2022/03/24 19:19:31
+Num of peers received: 1
+192.168.1.79:51396 
+0 single peers received:
+0 sends:
+0 snippets:
+Thu Mar 24 19:19:57 MDT 2022
+1 in list: 192.168.1.79:51396 
+1 sources:
+Source: 192.168.1.79:55921
+Date: 2022/03/24 19:19:31
+Num of peers received: 1
+192.168.1.79:51396 
+0 single peers received:
+0 sends:
+0 snippets:
+Thu Mar 24 19:20:57 MDT 2022
+1 in list: 192.168.1.79:49253 
+1 sources:
+Source: 192.168.1.79:55921
+Date: 2022/03/24 19:20:51
+Num of peers received: 1
+192.168.1.79:49253 
+0 single peers received:
+0 sends:
+0 snippets:
+Thu Mar 24 19:21:07 MDT 2022
+1 in list: 192.168.1.79:49253 
+1 sources:
+Source: 192.168.1.79:55921
+Date: 2022/03/24 19:20:51
+Num of peers received: 1
+192.168.1.79:49253 
+0 single peers received:
+0 sends:
+0 snippets:
+Thu Mar 24 19:21:17 MDT 2022
+1 in list: 192.168.1.79:49253 
+1 sources:
+Source: 192.168.1.79:55921
+Date: 2022/03/24 19:20:51
+Num of peers received: 1
+192.168.1.79:49253 
+0 single peers received:
+0 sends:
+0 snippets:
+Thu Mar 24 19:22:32 MDT 2022
+1 in list: 192.168.1.79:52381 
+1 sources:
+Source: 192.168.1.79:55921
+Date: 2022/03/24 19:22:10
+Num of peers received: 1
+192.168.1.79:52381 
+0 single peers received:
+0 sends:
+0 snippets:
+Thu Mar 24 19:25:22 MDT 2022
+1 in list: 192.168.1.79:54946 
+1 sources:
+Source: 192.168.1.79:55921
+Date: 2022/03/24 19:25:20
+Num of peers received: 1
+192.168.1.79:54946 
+0 single peers received:
+0 sends:
+0 snippets:
+Thu Mar 24 19:25:32 MDT 2022
+1 in list: 192.168.1.79:54946 
+1 sources:
+Source: 192.168.1.79:55921
+Date: 2022/03/24 19:25:20
+Num of peers received: 1
+192.168.1.79:54946 
+0 single peers received:
+0 sends:
+0 snippets:
+Thu Mar 24 19:25:42 MDT 2022
+1 in list: 192.168.1.79:54946 
+1 sources:
+Source: 192.168.1.79:55921
+Date: 2022/03/24 19:25:20
+Num of peers received: 1
+192.168.1.79:54946 
+0 single peers received:
+0 sends:
+0 snippets:

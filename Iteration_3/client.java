@@ -520,6 +520,7 @@ class initiateRegistryContact extends Thread{
                 }
             }
             // close the socket
+            Thread.sleep(100);
             clientSocket.close();
             System.out.println("Disconnected from the Registry via TCP");
             
