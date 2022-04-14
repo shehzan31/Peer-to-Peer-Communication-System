@@ -16,7 +16,8 @@ import java.util.Scanner;
 import java.time.format.DateTimeFormatter;
 import java.time.Duration;
 import java.time.LocalDateTime;
-
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Objects;
 
 
 
@@ -237,12 +238,12 @@ class SnipSend extends Thread{
 
 
 //Making Tuple Class: https://leetcode.com/problems/time-based-key-value-store/discuss/466306/Java-solution-using-HashMap-with-composite-key-Beats-89.21-submissions-wrt-time
-private class Tuple {
-    String source_location;
+ class Tuple {
+    String key;
     int timestamp;
 
-    public Tuple(String source_location, int timestamp) {
-        this.source_location = source_location;
+    public Tuple(String key, int timestamp) {
+        this.key = key;
         this.timestamp = timestamp;
     }
 
@@ -662,7 +663,7 @@ public class client {
      * @param received
      * @param source_location
      */
-    public static void snipReceived(String received, String source_location){
+    public static void snipReceived(String received, String source_location,DatagramSocket peerSock){
         received = received.substring(4, received.length()).trim();
         int timeStampReceived = Integer.parseInt(received.split(" ", 2)[0]);
         String content = received.split(" ", 2)[1].trim();
@@ -674,10 +675,20 @@ public class client {
         snips.add(snip);
 
 
-        byte[] toSend = ("ack " + timeStampReceived).getBytes();
-        InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
-        int source_port = InetAddress.getByName(source_location.split(":")[1]);
-        DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
+        try{
+            byte[] toSend = ("ack " + timeStampReceived).getBytes();
+            InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
+            int source_port = Integer.valueOf(source_location.split(":")[1].trim());
+            DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
+            peerSock.send(packet);
+        }
+        catch(Exception err) {
+            //Exception handling
+            System.out.println("Error: " + err.getMessage());
+        }
+
+
+
 
 
         System.out.println(Integer.toString(timeStampReceived) + " " + content + " " + timeReceived + " " + source_location);
@@ -723,19 +734,19 @@ public class client {
         udpPeersReceived.add(udp_peer);
     }
 
-    private static void receiveAcks(String source_location) {
+    private static void receiveAcks(String source_location, DatagramSocket peerSock) {
 		boolean socketOpen = true;
 		while (socketOpen) {
 			byte[] message = new byte[1024];
 			DatagramPacket packet = new DatagramPacket(message,1024);
 			try {
-				udpSocket.receive(packet);
+				peerSock.receive(packet);
 				String ackMessage = new String(message);
 				if (ackMessage.substring(0,3).equalsIgnoreCase("ack")) {
-					String timeStamp = ackMessage.substring(3).trim();
+					int timeStamp = Integer.valueOf(ackMessage.substring(3).trim());
                     
                     for(Peer peer: peers){
-                        if(source_location == peer.source_location){
+                        if(source_location == peer.location){
                             peer.set(ourLocation, timeStamp, "ack");
                         }
 
@@ -790,13 +801,13 @@ public class client {
                                 initContact2.start();
                                 break;
                             case "snip":
-                                snipReceived(received, source_location);
+                                snipReceived(received, source_location, peerSock);
                                 break;
                             case "peer":
                                 peerReceived(received, source_location);
                                 break;
                             case "ack":
-                                receiveAcks(source_location);
+                                receiveAcks(source_location,peerSock);
                         }
                     }
                     catch (SocketTimeoutException e) {
