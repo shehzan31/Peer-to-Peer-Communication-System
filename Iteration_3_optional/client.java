@@ -204,6 +204,7 @@ class SnipSend extends Thread{
                 byte[] toSend = ("snip"+Integer.toString(timeStampSend)+" "+content).getBytes();
                 for(Peer p : peers){
                     if(!p.location.equals(ourLocation)){
+                        if(p.status.equals("active")){
                         outer: for (int counter = 0; counter < 3; counter++) {
                         LocalDateTime now = LocalDateTime.now();
                         if(Duration.between(p.timeStamp, now).getSeconds() < 10){
@@ -231,6 +232,7 @@ class SnipSend extends Thread{
 
                         }  
                     }   
+                }
                     }
                 }
 
@@ -740,9 +742,13 @@ public class client {
         if(!peerAvail){
             Peer peerAdd = new Peer(received, now);
             peers.add(peerAdd);
+
         }
         UDP_Peer_rcd udp_peer = new UDP_Peer_rcd(received, source_location, dtf.format(now));
         udpPeersReceived.add(udp_peer);
+        for(Snip s : snips){
+            
+        }
     }
 
     private static void receiveAcks(String source_location, DatagramSocket peerSock) {
@@ -861,6 +867,7 @@ public class client {
                     try{
                         for(Peer p : peers){
                             if(!p.location.equals(ourLocation)){
+                                if(p.status.equals("active")){
                                 LocalDateTime now = LocalDateTime.now();
                                 if(Duration.between(p.timeStamp, now).getSeconds() < 10){
                                     InetAddress host = InetAddress.getByName(p.location.split(":")[0]);
@@ -882,6 +889,7 @@ public class client {
                                     }  
                                 } 
                             }
+                        }
                         }
                         Thread.sleep(6000);
 
