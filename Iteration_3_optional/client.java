@@ -47,7 +47,7 @@ class Peer{
     public String location;
     public LocalDateTime timeStamp; 
     private ConcurrentHashMap<Tuple, String> snipTimeStampLocation = new ConcurrentHashMap<Tuple, String>();
-    public boolean active;
+    public String status;
 
     //Constructor storing all the values
     public Peer(String loc, LocalDateTime time){
@@ -202,10 +202,11 @@ class SnipSend extends Thread{
                             System.out.println("Snip sent to " + p.location);   
 
                             if (p.get(ourLocation, timeStampSend) != null){
+                                System.out.println("ack received!");
                                 break;
                             }
                             if(counter == 2){
-                                p.active = false;
+                                p.status = "missing_ack";
                             }
 
                         }  
