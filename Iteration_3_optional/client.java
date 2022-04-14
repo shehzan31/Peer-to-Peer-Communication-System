@@ -201,7 +201,7 @@ class SnipSend extends Thread{
                             peerSock.send(packet);
                             System.out.println("Snip sent to " + p.location);   
 
-
+                            //from https://stackoverflow.com/questions/19727109/how-to-exit-a-while-loop-after-a-certain-time
                             long start_time = System.currentTimeMillis();
                             long wait_time = 10000;
                             long end_time = start_time + wait_time;
@@ -235,6 +235,8 @@ class SnipSend extends Thread{
     }
 }
 
+
+//Making Tuple Class: https://leetcode.com/problems/time-based-key-value-store/discuss/466306/Java-solution-using-HashMap-with-composite-key-Beats-89.21-submissions-wrt-time
 private class Tuple {
     String source_location;
     int timestamp;
