@@ -18,6 +18,8 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Objects;
+import java.time.Instant;
+
 
 
 
@@ -49,11 +51,14 @@ class Peer{
     public LocalDateTime timeStamp; 
     private ConcurrentHashMap<Tuple, String> snipTimeStampLocation = new ConcurrentHashMap<Tuple, String>();
     public String status;
+    public Instant startTime;
 
     //Constructor storing all the values
     public Peer(String loc, LocalDateTime time){
         this.location = loc;
         this.timeStamp = time;
+        this.startTime = Instant.now();
+        this.status = "active";
     }
 
     public void set(String key, int timestamp, String value) {
@@ -68,6 +73,12 @@ class Peer{
                 return value;
         }
         return null;
+    }
+    public long checkDuration(Instant endTime){
+        return Duration.between(startTime, endTime).getSeconds();
+    }
+    public void resetStart(Instant newTime){
+        this.startTime = newTime;
     }
 }
 
@@ -768,9 +779,13 @@ public class client {
     public static void createUDPReceiveThread(DatagramSocket peerSock){
         Thread t = new Thread() {
             public synchronized void run(){
-            
-                while(!recieveStop){
 
+                while(!recieveStop){
+                    for(Peer peer : peers){
+                        if (peer.checkDuration(Instant.now()) == 181 ){
+                            peer.status = "silent";
+                        }
+                    }
                 try{
                     byte[] buf = new byte[256];
                     if(counter>0){
@@ -787,6 +802,12 @@ public class client {
                         String first4char = null;
                         
                         InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
+
+                        for(Peer peer : peers){
+                            if(peer.location == source_location){
+                                peer.resetStart(Instant.now());
+                            }
+                        }
 
                         if(received.length() > 4){
                             first4char = received.substring(0, 4);
@@ -825,6 +846,8 @@ public class client {
         };
         t.start();
     }
+
+
 
     /**
      * Sending the peer packets function creates a new thread, which checks for all peers that is not a current peer, gives it a timestamp, 
