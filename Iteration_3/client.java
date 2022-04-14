@@ -148,7 +148,7 @@ class SnipSend extends Thread{
     public ArrayList<Peer> peers;
     public String ourLocation;
 
-    public SnipSend(DatagramSocket sock, VolatileTimeStamp time, ArrayList<Peer> p, String loc){
+    public  SnipSend(DatagramSocket sock, VolatileTimeStamp time, ArrayList<Peer> p, String loc){
         this.peerSock = sock;
         this.timeStamp = time;
         this.peers = p;
@@ -160,7 +160,7 @@ class SnipSend extends Thread{
      * The snip is taken via keyboard, gets a current timestamp attached to it and is converted to bytes.
      * Loop through each peer which is not the current peer and send the sdnip with the value of the location. 
      */
-    public void run(){
+    public synchronized void run(){
         try{
             Scanner keyboard = new Scanner(System.in);
             while(!Thread.currentThread().isInterrupted()){
@@ -236,7 +236,7 @@ class initiateRegistryContact extends Thread{
      * it through the Buffered Writter of the OutputStream in the socket connection 
      * @param writer
      */
-    public static void sendCode(BufferedWriter writer){
+    public synchronized static void sendCode(BufferedWriter writer){
         try{  
             // Buffered reader to read the document
             BufferedReader in = new BufferedReader(new FileReader("client.java"));
@@ -274,7 +274,7 @@ class initiateRegistryContact extends Thread{
      * @param reader
      * @param sock
      */
-    public static void receivePeers(BufferedReader reader, Socket sock){
+    public synchronized static void receivePeers(BufferedReader reader, Socket sock){
         try{
             // keeps track of all the peers received from this source
             ArrayList<Peer> localPeers = new ArrayList<Peer>();
@@ -327,7 +327,7 @@ class initiateRegistryContact extends Thread{
 
     /**Used Merge sort from https://www.baeldung.com/java-merge-sort */
 
-    public static void merge_snips(ArrayList<Snip> original, ArrayList<Snip> left_snips, ArrayList<Snip> right_snips, int left_size, int right_size){
+    public synchronized static void merge_snips(ArrayList<Snip> original, ArrayList<Snip> left_snips, ArrayList<Snip> right_snips, int left_size, int right_size){
 
         // pointers in each lists
         int left_pointer = 0;
@@ -359,7 +359,7 @@ class initiateRegistryContact extends Thread{
         }
     }
 
-    public static void sort_snips(ArrayList<Snip> original, int size){
+    public synchronized static void sort_snips(ArrayList<Snip> original, int size){
         if(size >= 2){
             int middle = size/2;
 
@@ -389,7 +389,7 @@ class initiateRegistryContact extends Thread{
      * peer list
      * @param writer
      */
-    public static void sendReport(BufferedWriter writer){
+    public synchronized static void sendReport(BufferedWriter writer){
         try{
             // Writes the number of peers followed by a newline character
             writer.write(Integer.toString(peers_Reg.size())+"\n");
@@ -435,7 +435,7 @@ class initiateRegistryContact extends Thread{
      * Send the location address of UDP server connection
      * @param writer
      */
-    public static void sendLocation(BufferedWriter writer){
+    public synchronized static void sendLocation(BufferedWriter writer){
         try{
             writer.write(InetAddress.getLocalHost().getHostAddress()+":"+Integer.toString(UDP_PORT)+"\n");
             writer.flush();
@@ -449,7 +449,7 @@ class initiateRegistryContact extends Thread{
      * Sends the team name through the BufferedWritter of the OutputStream in the socket connection.
      * @param writer
      */
-    public static void sendTeamName(BufferedWriter writer){
+    public synchronized static void sendTeamName(BufferedWriter writer){
         String teamName = "The Social Network";
 
         try{
@@ -463,7 +463,7 @@ class initiateRegistryContact extends Thread{
             }
     }
 
-    public void run(){
+    public synchronized void run(){
         try (
                 // Socket connection via host and port 
                 Socket clientSocket = new Socket(host, port);
@@ -650,7 +650,7 @@ public class client {
      */
     public static void createUDPReceiveThread(DatagramSocket peerSock){
         Thread t = new Thread() {
-            public void run(){
+            public synchronized void run(){
             
                 while(!recieveStop){
 
@@ -714,7 +714,7 @@ public class client {
      */
     public static void sendPeerPackets(DatagramSocket peerSock){
         Thread t = new Thread(){
-            public void run(){
+            public synchronized void run(){
                 while(!recieveStop){
                     try{
                         for(Peer p : peers){
