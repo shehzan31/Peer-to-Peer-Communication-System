@@ -1,5 +1,5 @@
 /**
- * CPSC 559: Project Iteration 1 solution
+ * CPSC 559: Project Iteration 3 Optional Requirements solution
  * Client Class which connects with the Registry via TCP Protocol and interacts as described in the rubric
  * @author Shehzan Murad Ali and Humble Chaudhry
  *  */ 
@@ -8,6 +8,7 @@
 // imports
 import java.io.*;
 import java.net.*;
+import java.security.Timestamp;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
@@ -45,11 +46,27 @@ class Peer{
     //local variables storing location (ip:port) and time stamp for each respective peer
     public String location;
     public LocalDateTime timeStamp; 
+    private ConcurrentHashMap<Tuple, String> snipTimeStampLocation = new ConcurrentHashMap<Tuple, String>();
+    public boolean active;
 
     //Constructor storing all the values
     public Peer(String loc, LocalDateTime time){
         this.location = loc;
         this.timeStamp = time;
+    }
+
+    public void set(String key, int timestamp, String value) {
+        snipTimeStampLocation.put(new Tuple(key, timestamp), value);
+    }
+
+    public String get(String key, int timestamp) {
+        
+        for (int i = timestamp; i >= 1; i--) {
+            String value = snipTimeStampLocation.getOrDefault(new Tuple(key, i), "");
+            if (!value.isEmpty())
+                return value;
+        }
+        return null;
     }
 }
 
@@ -105,6 +122,10 @@ class Snip{
         this.timeReceived = timeReceived;
         this.source_location = source_location;
     }
+
+    // int getTimeStamp(String source_location){
+
+    // }
 }
 
 /**
@@ -171,6 +192,7 @@ class SnipSend extends Thread{
                 byte[] toSend = ("snip"+Integer.toString(timeStampSend)+" "+content).getBytes();
                 for(Peer p : peers){
                     if(!p.location.equals(ourLocation)){
+                        for (int counter = 0; counter < 3; counter++) {
                         LocalDateTime now = LocalDateTime.now();
                         if(Duration.between(p.timeStamp, now).getSeconds() < 10){
                             InetAddress host = InetAddress.getByName(p.location.split(":")[0]);
@@ -178,9 +200,20 @@ class SnipSend extends Thread{
                             DatagramPacket packet = new DatagramPacket(toSend, toSend.length, host, port);
                             peerSock.send(packet);
                             System.out.println("Snip sent to " + p.location);   
-                        } 
+
+                            if (p.get(ourLocation, timeStampSend) != null){
+                                break;
+                            }
+                            if(counter == 2){
+                                p.active = false;
+                            }
+
+                        }  
+                    }   
                     }
                 }
+
+
             }
             if(Thread.currentThread().isInterrupted()){
                 keyboard.close();
@@ -192,6 +225,34 @@ class SnipSend extends Thread{
         }
     }
 }
+
+private class Tuple {
+    String source_location;
+    int timestamp;
+
+    public Tuple(String source_location, int timestamp) {
+        this.source_location = source_location;
+        this.timestamp = timestamp;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof Tuple))
+            return false;
+        Tuple tuple = (Tuple) o;
+        return timestamp == tuple.timestamp && key.equals(tuple.key);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(key, timestamp);
+    }
+}
+
+
 
 /**
  * Initiating the connection with the registry Class
@@ -213,6 +274,7 @@ class initiateRegistryContact extends Thread{
     public static ArrayList<Snip> snips;
     public static ArrayList<UDP_Peer_rcd> uPeer_rcds;
     public static ArrayList<UDP_Peer_sent> uPeer_sents;
+
 
 
     //Constructor for storing variables
@@ -650,7 +712,7 @@ public class client {
         udpPeersReceived.add(udp_peer);
     }
 
-    private void receiveAcks(DatagramSocket udpSocket) {
+    private static void receiveAcks(String source_location) {
 		boolean socketOpen = true;
 		while (socketOpen) {
 			byte[] message = new byte[1024];
@@ -660,19 +722,13 @@ public class client {
 				String ackMessage = new String(message);
 				if (ackMessage.substring(0,3).equalsIgnoreCase("ack")) {
 					String timeStamp = ackMessage.substring(3).trim();
-                    Int source_port = pack.getPort();
-                    String source_location = ((InetSocketAddress) pack.getSocketAddress()).getHostString() + ":" + Integer.toString(source_port);
-					Snip s = snips.source_location.get(timeStamp);
+                    
+                    for(Peer peer: peers){
+                        if(source_location == peer.source_location){
+                            peer.set(ourLocation, timeStamp, "ack");
+                        }
 
-                    if (s != null) {
-						s.acked = true;
-						LOGGER.log(Level.INFO, "Received ack from " + source_location);
-
-
-					} else {
-						LOGGER.log(Level.INFO, "Can't store ack, unknown timeStamp: " + source_location);
-					}    
-				
+                    }
 				}
 			} catch (IOException e) {
 				// do nothing.  When socket closes we can end this method.
@@ -728,6 +784,8 @@ public class client {
                             case "peer":
                                 peerReceived(received, source_location);
                                 break;
+                            case "ack":
+                                receiveAcks(source_location);
                         }
                     }
                     catch (SocketTimeoutException e) {
