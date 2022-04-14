@@ -2,7 +2,7 @@
  * CPSC 559: Project Iteration 3 Optional Requirements solution
  * Client Class which connects with the Registry via TCP Protocol and interacts as described in the rubric
  * @author Shehzan Murad Ali and Humble Chaudhry
- *  */ 
+ **/ 
 
 
 // imports
@@ -192,7 +192,7 @@ class SnipSend extends Thread{
                 byte[] toSend = ("snip"+Integer.toString(timeStampSend)+" "+content).getBytes();
                 for(Peer p : peers){
                     if(!p.location.equals(ourLocation)){
-                        for (int counter = 0; counter < 3; counter++) {
+                        outer: for (int counter = 0; counter < 3; counter++) {
                         LocalDateTime now = LocalDateTime.now();
                         if(Duration.between(p.timeStamp, now).getSeconds() < 10){
                             InetAddress host = InetAddress.getByName(p.location.split(":")[0]);
@@ -201,10 +201,18 @@ class SnipSend extends Thread{
                             peerSock.send(packet);
                             System.out.println("Snip sent to " + p.location);   
 
-                            if (p.get(ourLocation, timeStampSend) != null){
-                                System.out.println("ack received!");
-                                break;
+
+                            long start_time = System.currentTimeMillis();
+                            long wait_time = 10000;
+                            long end_time = start_time + wait_time;
+
+                            while (System.currentTimeMillis() < end_time) {
+                                if (p.get(ourLocation, timeStampSend) != null){
+                                    System.out.println("ack received!");
+                                    break outer;
+                                }
                             }
+
                             if(counter == 2){
                                 p.status = "missing_ack";
                             }
