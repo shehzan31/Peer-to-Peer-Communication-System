@@ -696,31 +696,31 @@ public class client {
             sendAllSnips(source_location, peerSock);
         }
 
-
-        
-        timeStamp.setTimeStamp(Integer.max(timeStamp.getTimeStamp(), timeStampReceived)+1);
-        Snip snip = new Snip(timeStampReceived, content, timeReceived, source_location);
-        snips.add(snip);
-
-
-        try{
-            byte[] toSend = ("ack" + " " + timeStampReceived).getBytes();
-            InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
-            int source_port = Integer.valueOf(source_location.split(":")[1].trim());
-            DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
-            peerSock.send(packet);
-            // System.out.println("ack sent to " + source_location);
-        }
-        catch(Exception err) {
-            //Exception handling
-            System.out.println("Error: " + err.getMessage());
+        Boolean snipExists = false;
+        for(Snip s : snips){
+            if(s.content == content && s.timeStamp == timeStampReceived && s.source_location == source_location){
+                snipExists = true;
+            }
         }
 
-
-
-
-
-        System.out.println(Integer.toString(timeStampReceived) + " " + content + " " + timeReceived + " " + source_location);
+        if(!snipExists) {
+            timeStamp.setTimeStamp(Integer.max(timeStamp.getTimeStamp(), timeStampReceived)+1);
+            Snip snip = new Snip(timeStampReceived, content, timeReceived, source_location);
+            snips.add(snip);
+            try{
+                byte[] toSend = ("ack" + " " + timeStampReceived).getBytes();
+                InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
+                int source_port = Integer.valueOf(source_location.split(":")[1].trim());
+                DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
+                peerSock.send(packet);
+                // System.out.println("ack sent to " + source_location);
+            }
+            catch(Exception err) {
+                //Exception handling
+                System.out.println("Error: " + err.getMessage());
+            }
+            System.out.println(Integer.toString(timeStampReceived) + " " + content + " " + timeReceived + " " + source_location);
+        }  
     }
 
     public static void sendAllSnips(String source_location, DatagramSocket peerSock) {
@@ -810,6 +810,10 @@ public class client {
 		}
 	}
 
+    public static void receiveCatch(String received){
+        
+    }
+
     /**
      * The UDP receive thread makes a new thread to check the packet which was received via UDP. 
      * in this packet we receive the port, source and received string. 
@@ -870,6 +874,8 @@ public class client {
                                 break;
                             case "ack":
                                 receiveAcks(source_location,peerSock);
+                            case "ctch":
+                                receiveCatch(received);
                         }
                     }
                     catch (SocketTimeoutException e) {
