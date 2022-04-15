@@ -686,17 +686,17 @@ public class client2 {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
         LocalDateTime now = LocalDateTime.now();
         String timeReceived = dtf.format(now);
-        Boolean snipSenderAvail = false;
-        for(Peer p : peers){
-            if(p.location.equals(source_location)){
-                snipSenderAvail = true;
-            }
-        }
-        if(!snipSenderAvail){
-            Peer source = new Peer(source_location, now);
-            peers.add(source);
-            sendAllSnips(source_location, peerSock);
-        }
+        // Boolean snipSenderAvail = false;
+        // for(Peer p : peers){
+        //     if(p.location.equals(source_location)){
+        //         snipSenderAvail = true;
+        //     }
+        // }
+        // if(!snipSenderAvail){
+        //     Peer source = new Peer(source_location, now);
+        //     peers.add(source);
+        //     sendAllSnips(source_location, peerSock);
+        // }
 
         Boolean snipExists = false;
         for(Snip s : snips){
@@ -802,6 +802,8 @@ public class client2 {
 	}
 
     public static void receiveCatch(String received){
+
+        System.out.println("this ran");
         received = received.substring(4, received.length()).trim();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
         LocalDateTime now = LocalDateTime.now();
@@ -887,8 +889,10 @@ public class client2 {
                                 break;
                             case "ack ":
                                 receiveAcks(received, source_location,peerSock);
+                                break;
                             case "ctch":
                                 receiveCatch(received);
+                                break;
                         }
                     }
                     catch (SocketTimeoutException e) {

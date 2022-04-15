@@ -52,7 +52,7 @@ class Peer{
     public LocalDateTime timeStamp; 
     private ConcurrentHashMap<Tuple, String> snipTimeStampLocation = new ConcurrentHashMap<Tuple, String>();
     public String status;
-    public Instant startTime;
+    public Instant startTime; 
 
     //Constructor storing all the values
     public Peer(String loc, LocalDateTime time){
@@ -221,7 +221,8 @@ class SnipSend extends Thread{
                             long end_time = start_time + wait_time;
 
                             while (System.currentTimeMillis() < end_time) {
-    
+
+                               
                                 if (p.get(ourLocation, timeStampSend) != null){
                                     System.out.println("ack received!");
                                     break outer;
@@ -539,7 +540,7 @@ class initiateRegistryContact extends Thread{
      * @param writer
      */
     public synchronized static void sendTeamName(BufferedWriter writer){
-        String teamName = "The Social Network";
+        String teamName = "test2";
 
         try{
             //writes then flushes
@@ -621,7 +622,7 @@ class initiateRegistryContact extends Thread{
 }
 
 // Client class - main class
-public class client {
+public class client3 {
 
     // master arraylist to store peers (no duplicates) and sources (class provided above)
     public static ArrayList<Peer> peers = new ArrayList<Peer>();
@@ -648,7 +649,7 @@ public class client {
      */
     public static void shutDownProcedure(DatagramSocket peerSock, InetAddress udpHost,int source_port){
 
-        String teamName = "The Social Network";
+        String teamName = "test";
 
         byte[] toSend = ("ack" + teamName).getBytes();
         DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
@@ -786,20 +787,22 @@ public class client {
         udpPeersReceived.add(udp_peer);
     }
 
-    private static void receiveAcks(String received, String source_location, DatagramSocket peerSock) {
+    public static void receiveAcks(String received, String source_location, DatagramSocket peerSock) {
 
-        int timeStamp = Integer.valueOf(received.substring(4, received.length()).trim());
-        System.out.println("ack received from: " + peerSock);
 
-        for(Peer peer: peers){
-            if(source_location.equals(peer.location)){
-                System.out.println("this equals it");
-                peer.set(ourLocation, timeStamp, "ack");
-            }
-        }
-}
+					int timeStamp = Integer.valueOf(received.substring(4, received.length()).trim());
+                    System.out.println("ack received from: " + peerSock);
+                    for(Peer peer: peers){
+                        if(source_location.equals(peer.location)){
+                            System.out.println("this equals it");
+                            peer.set(ourLocation, timeStamp, "ack");
+                        }
+
+                    }
+	}
 
     public static void receiveCatch(String received){
+
         System.out.println("this ran");
         received = received.substring(4, received.length()).trim();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
