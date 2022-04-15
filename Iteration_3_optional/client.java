@@ -678,11 +678,26 @@ public class client {
      */
     public static void snipReceived(String received, String source_location,DatagramSocket peerSock){
         received = received.substring(4, received.length()).trim();
+
         int timeStampReceived = Integer.parseInt(received.split(" ", 2)[0]);
         String content = received.split(" ", 2)[1].trim();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
         LocalDateTime now = LocalDateTime.now();
         String timeReceived = dtf.format(now);
+        Boolean snipSenderAvail = false;
+        for(Peer p : peers){
+            if(p.location.equals(source_location)){
+                snipSenderAvail = true;
+            }
+        }
+        if(!snipSenderAvail){
+            Peer source = new Peer(source_location, now);
+            peers.add(source);
+            sendAllSnips(source_location, peerSock);
+        }
+
+
+        
         timeStamp.setTimeStamp(Integer.max(timeStamp.getTimeStamp(), timeStampReceived)+1);
         Snip snip = new Snip(timeStampReceived, content, timeReceived, source_location);
         snips.add(snip);
@@ -707,6 +722,25 @@ public class client {
         System.out.println(Integer.toString(timeStampReceived) + " " + content + " " + timeReceived + " " + source_location);
     }
 
+    public static void sendAllSnips(String source_location, DatagramSocket peerSock) {
+        for(Snip s : snips){
+
+            try{
+                byte[] toSend = ("ctch"+s.source_location+" "+s.timeStamp+" "+s.content).getBytes();
+                InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
+                unt source_port = Integer.valueOf(source_location.split(":")[1].trim());
+                DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
+                peerSock.send(packet);
+            }
+            catch(Exception err) {
+                //Exception handling
+                System.out.println("Error: " + err.getMessage());
+            }
+        }
+
+        
+    }
+
     /**
      * Peers Received function overwrites the received global variable to the string that was passed down in the argument
      * Looping through every peer, we check whether or no th the peer is part of the same source and if it is, we 
@@ -718,7 +752,7 @@ public class client {
      * @param received
      * @param source_location
      */
-    public static void peerReceived(String received, String source_location){
+    public static void peerReceived(String received, String source_location, DatagramSocket peerSock){
         received = received.substring(4, received.length()).trim();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
         LocalDateTime now = LocalDateTime.now();
@@ -732,6 +766,7 @@ public class client {
         if(!sourceAvail){
             Peer source = new Peer(source_location, now);
             peers.add(source);
+            sendAllSnips(source_location, peerSock);
         }
         Boolean peerAvail = false;
         for(Peer p : peers){
@@ -742,13 +777,11 @@ public class client {
         if(!peerAvail){
             Peer peerAdd = new Peer(received, now);
             peers.add(peerAdd);
+            sendAllSnips(received, peerSock);
 
         }
         UDP_Peer_rcd udp_peer = new UDP_Peer_rcd(received, source_location, dtf.format(now));
         udpPeersReceived.add(udp_peer);
-        for(Snip s : snips){
-            
-        }
     }
 
     private static void receiveAcks(String source_location, DatagramSocket peerSock) {
@@ -827,7 +860,7 @@ public class client {
                                 snipReceived(received, source_location, peerSock);
                                 break;
                             case "peer":
-                                peerReceived(received, source_location);
+                                peerReceived(received, source_location, peerSock);
                                 break;
                             case "ack":
                                 receiveAcks(source_location,peerSock);
