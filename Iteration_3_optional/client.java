@@ -812,7 +812,25 @@ public class client {
 	}
 
     public static void receiveCatch(String received){
-        
+        received = received.substring(4, received.length()).trim();
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
+        LocalDateTime now = LocalDateTime.now();
+        String timeReceived = dtf.format(now);
+        String source_location = received.split(" ")[0];
+        int timeStampReceived = Integer.parseInt(received.split(" ")[1]);
+        String content = received.split(" ")[2];
+        Boolean snipExists = false;
+        for(Snip s : snips){
+            if(s.content == content && s.timeStamp == timeStampReceived && s.source_location == source_location){
+                snipExists = true;
+            }
+        }
+        if(!snipExists){
+            timeStamp.setTimeStamp(Integer.max(timeStamp.getTimeStamp(), timeStampReceived)+1);
+            Snip snip = new Snip(timeStampReceived, content, timeReceived, source_location);
+            snips.add(snip);
+            System.out.println("CatchUp -> " + Integer.toString(timeStampReceived) + " " + content + " " + timeReceived + " " + source_location);
+        }
     }
 
     /**
