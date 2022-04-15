@@ -729,7 +729,7 @@ public class client {
             try{
                 byte[] toSend = ("ctch"+s.source_location+" "+s.timeStamp+" "+s.content).getBytes();
                 InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
-                unt source_port = Integer.valueOf(source_location.split(":")[1].trim());
+                int source_port = Integer.valueOf(source_location.split(":")[1].trim());
                 DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
                 peerSock.send(packet);
             }
