@@ -8,6 +8,7 @@
 // imports
 import java.io.*;
 import java.net.*;
+import java.util.*;
 import java.security.Timestamp;
 import java.util.ArrayList;
 import java.util.Random;
@@ -52,7 +53,7 @@ class Peer{
     public LocalDateTime timeStamp; 
     private ConcurrentHashMap<Tuple, String> snipTimeStampLocation = new ConcurrentHashMap<Tuple, String>();
     public String status;
-    public Instant startTime; 
+    public Instant startTime;
 
     //Constructor storing all the values
     public Peer(String loc, LocalDateTime time){
@@ -221,8 +222,7 @@ class SnipSend extends Thread{
                             long end_time = start_time + wait_time;
 
                             while (System.currentTimeMillis() < end_time) {
-
-                               
+    
                                 if (p.get(ourLocation, timeStampSend) != null){
                                     System.out.println("ack received!");
                                     break outer;
@@ -540,7 +540,7 @@ class initiateRegistryContact extends Thread{
      * @param writer
      */
     public synchronized static void sendTeamName(BufferedWriter writer){
-        String teamName = "test";
+        String teamName = "test2";
 
         try{
             //writes then flushes
@@ -649,7 +649,7 @@ public class client2 {
      */
     public static void shutDownProcedure(DatagramSocket peerSock, InetAddress udpHost,int source_port){
 
-        String teamName = "test";
+        String teamName = "test2";
 
         byte[] toSend = ("ack" + teamName).getBytes();
         DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
@@ -726,7 +726,9 @@ public class client2 {
     }
 
     public static void sendAllSnips(String source_location, DatagramSocket peerSock) {
-        for(Snip s : snips){
+        ArrayList<Snip> toSendList = snips;
+        Collections.reverse(toSendList);
+        for(Snip s : toSendList){
 
             try{
                 byte[] toSend = ("ctch"+s.source_location+" "+s.timeStamp+" "+s.content).getBytes();
@@ -787,23 +789,20 @@ public class client2 {
         udpPeersReceived.add(udp_peer);
     }
 
-    public static void receiveAcks(String received, String source_location, DatagramSocket peerSock) {
+    private static void receiveAcks(String received, String source_location, DatagramSocket peerSock) {
 
+        int timeStamp = Integer.valueOf(received.substring(4, received.length()).trim());
+        System.out.println("ack received from: " + peerSock);
 
-					int timeStamp = Integer.valueOf(received.substring(4, received.length()).trim());
-                    System.out.println("ack received from: " + peerSock);
-                    for(Peer peer: peers){
-                        if(source_location.equals(peer.location)){
-                            System.out.println("this equals it");
-                            peer.set(ourLocation, timeStamp, "ack");
-                        }
-
-                    }
-	}
+        for(Peer peer: peers){
+            if(source_location.equals(peer.location)){
+                System.out.println("this equals it");
+                peer.set(ourLocation, timeStamp, "ack");
+            }
+        }
+}
 
     public static void receiveCatch(String received){
-
-        System.out.println("this ran");
         received = received.substring(4, received.length()).trim();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
         LocalDateTime now = LocalDateTime.now();
@@ -813,8 +812,9 @@ public class client2 {
         String content = received.split(" ")[2];
         Boolean snipExists = false;
         for(Snip s : snips){
-            if(s.content == content && s.timeStamp == timeStampReceived && s.source_location == source_location){
+            if((s.content.equals(content)) && (s.timeStamp == timeStampReceived) && (s.source_location.equals(source_location))){
                 snipExists = true;
+                System.out.println("exists");
             }
         }
         if(!snipExists){
@@ -989,7 +989,6 @@ public class client2 {
     public static void main(String[] args)
 	{              
 		try{
-            
             // Starting a datagram socket
             DatagramSocket peerSock = new DatagramSocket();
             int UDP_PORT = peerSock.getLocalPort();

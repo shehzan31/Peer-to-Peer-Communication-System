@@ -8,6 +8,7 @@
 // imports
 import java.io.*;
 import java.net.*;
+import java.util.*;
 import java.security.Timestamp;
 import java.util.ArrayList;
 import java.util.Random;
@@ -725,7 +726,9 @@ public class client {
     }
 
     public static void sendAllSnips(String source_location, DatagramSocket peerSock) {
-        for(Snip s : snips){
+        ArrayList<Snip> toSendList = snips;
+        Collections.reverse(toSendList);
+        for(Snip s : toSendList){
 
             try{
                 byte[] toSend = ("ctch"+s.source_location+" "+s.timeStamp+" "+s.content).getBytes();
@@ -800,7 +803,6 @@ public class client {
 }
 
     public static void receiveCatch(String received){
-        System.out.println("this ran");
         received = received.substring(4, received.length()).trim();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
         LocalDateTime now = LocalDateTime.now();
@@ -810,8 +812,9 @@ public class client {
         String content = received.split(" ")[2];
         Boolean snipExists = false;
         for(Snip s : snips){
-            if(s.content == content && s.timeStamp == timeStampReceived && s.source_location == source_location){
+            if((s.content.equals(content)) && (s.timeStamp == timeStampReceived) && (s.source_location.equals(source_location))){
                 snipExists = true;
+                System.out.println("exists");
             }
         }
         if(!snipExists){
@@ -986,7 +989,12 @@ public class client {
     public static void main(String[] args)
 	{              
 		try{
-            
+            ArrayList<Integer> test = new ArrayList<Integer>();
+            test.add(1);
+            test.add(2);
+            test.add(3);
+            Collections.reverse(test);
+            System.out.println(test); 
             // Starting a datagram socket
             DatagramSocket peerSock = new DatagramSocket();
             int UDP_PORT = peerSock.getLocalPort();

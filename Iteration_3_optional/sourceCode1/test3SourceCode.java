@@ -1,4 +1,4 @@
-Fri Apr 15 12:15:08 MDT 2022
+Fri Apr 15 12:31:30 MDT 2022
 java
 /**
  * CPSC 559: Project Iteration 3 Optional Requirements solution
@@ -805,7 +805,6 @@ public class client {
 }
 
     public static void receiveCatch(String received){
-        System.out.println("this ran");
         received = received.substring(4, received.length()).trim();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
         LocalDateTime now = LocalDateTime.now();
@@ -815,8 +814,9 @@ public class client {
         String content = received.split(" ")[2];
         Boolean snipExists = false;
         for(Snip s : snips){
-            if(s.content == content && s.timeStamp == timeStampReceived && s.source_location == source_location){
+            if((s.content.equals(content)) && (s.timeStamp == timeStampReceived) && (s.source_location.equals(source_location))){
                 snipExists = true;
+                System.out.println("exists");
             }
         }
         if(!snipExists){
@@ -991,7 +991,12 @@ public class client {
     public static void main(String[] args)
 	{              
 		try{
-            
+            ArrayList<Integer> test = new ArrayList<Integer>();
+            test.add(1);
+            test.add(2);
+            test.add(3);
+            Collections.reverse(test);
+            System.out.println(test); 
             // Starting a datagram socket
             DatagramSocket peerSock = new DatagramSocket();
             int UDP_PORT = peerSock.getLocalPort();
