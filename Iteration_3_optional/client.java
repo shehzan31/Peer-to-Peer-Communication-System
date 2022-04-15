@@ -495,8 +495,8 @@ class initiateRegistryContact extends Thread{
     public synchronized static void sendReport(BufferedWriter writer){
         try{
             // Writes the number of peers followed by a newline character
-            writer.write(Integer.toString(peers_Reg.size())+"\n");
-            for(Peer p : peers_Reg){
+            writer.write(Integer.toString(peers.size())+"\n");
+            for(Peer p : peers){
                 // for each peer it reads, it send the peer followed by a new line character
                 // added aliveness <- update
                 writer.write(p.location + " " +  p.status + "\n");
