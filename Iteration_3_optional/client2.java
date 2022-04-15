@@ -19,8 +19,8 @@ import java.time.LocalDateTime;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Objects;
 import java.time.Instant;
-
 import java.util.concurrent.TimeUnit;
+
 
 
 
@@ -52,7 +52,7 @@ class Peer{
     public LocalDateTime timeStamp; 
     private ConcurrentHashMap<Tuple, String> snipTimeStampLocation = new ConcurrentHashMap<Tuple, String>();
     public String status;
-    public Instant startTime;
+    public Instant startTime; 
 
     //Constructor storing all the values
     public Peer(String loc, LocalDateTime time){
@@ -641,7 +641,6 @@ public class client2 {
     public static VolatileTimeStamp timeStamp = new VolatileTimeStamp();
     //the current location 
     public static String ourLocation;
-    
     /**
      * The shut down procedure is a function which closes the datagram socket to send the peers. 
      * @param peerSock
@@ -679,34 +678,68 @@ public class client2 {
      */
     public static void snipReceived(String received, String source_location,DatagramSocket peerSock){
         received = received.substring(4, received.length()).trim();
+
         int timeStampReceived = Integer.parseInt(received.split(" ", 2)[0]);
         String content = received.split(" ", 2)[1].trim();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
         LocalDateTime now = LocalDateTime.now();
         String timeReceived = dtf.format(now);
-        timeStamp.setTimeStamp(Integer.max(timeStamp.getTimeStamp(), timeStampReceived)+1);
-        Snip snip = new Snip(timeStampReceived, content, timeReceived, source_location);
-        snips.add(snip);
-
-
-        try{
-            byte[] toSend = ("ack" + " " + timeStampReceived).getBytes();
-            InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
-            int source_port = Integer.valueOf(source_location.split(":")[1].trim());
-            DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
-            peerSock.send(packet);
-            System.out.println("ack sent to " + source_location);
+        Boolean snipSenderAvail = false;
+        for(Peer p : peers){
+            if(p.location.equals(source_location)){
+                snipSenderAvail = true;
+            }
         }
-        catch(Exception err) {
-            //Exception handling
-            System.out.println("Error: " + err.getMessage());
+        if(!snipSenderAvail){
+            Peer source = new Peer(source_location, now);
+            peers.add(source);
+            sendAllSnips(source_location, peerSock);
         }
 
+        Boolean snipExists = false;
+        for(Snip s : snips){
+            if(s.content == content && s.timeStamp == timeStampReceived && s.source_location == source_location){
+                snipExists = true;
+            }
+        }
 
+        if(!snipExists) {
+            timeStamp.setTimeStamp(Integer.max(timeStamp.getTimeStamp(), timeStampReceived)+1);
+            Snip snip = new Snip(timeStampReceived, content, timeReceived, source_location);
+            snips.add(snip);
+            try{
+                byte[] toSend = ("ack" + " " + timeStampReceived).getBytes();
+                InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
+                int source_port = Integer.valueOf(source_location.split(":")[1].trim());
+                DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
+                peerSock.send(packet);
+                // System.out.println("ack sent to " + source_location);
+            }
+            catch(Exception err) {
+                //Exception handling
+                System.out.println("Error: " + err.getMessage());
+            }
+            System.out.println(Integer.toString(timeStampReceived) + " " + content + " " + timeReceived + " " + source_location);
+        }  
+    }
 
+    public static void sendAllSnips(String source_location, DatagramSocket peerSock) {
+        for(Snip s : snips){
 
+            try{
+                byte[] toSend = ("ctch"+s.source_location+" "+s.timeStamp+" "+s.content).getBytes();
+                InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
+                int source_port = Integer.valueOf(source_location.split(":")[1].trim());
+                DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
+                peerSock.send(packet);
+            }
+            catch(Exception err) {
+                //Exception handling
+                System.out.println("Error: " + err.getMessage());
+            }
+        }
 
-        System.out.println(Integer.toString(timeStampReceived) + " " + content + " " + timeReceived + " " + source_location);
+        
     }
 
     /**
@@ -720,7 +753,7 @@ public class client2 {
      * @param received
      * @param source_location
      */
-    public static void peerReceived(String received, String source_location){
+    public static void peerReceived(String received, String source_location, DatagramSocket peerSock){
         received = received.substring(4, received.length()).trim();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
         LocalDateTime now = LocalDateTime.now();
@@ -734,6 +767,7 @@ public class client2 {
         if(!sourceAvail){
             Peer source = new Peer(source_location, now);
             peers.add(source);
+            sendAllSnips(source_location, peerSock);
         }
         Boolean peerAvail = false;
         for(Peer p : peers){
@@ -744,13 +778,11 @@ public class client2 {
         if(!peerAvail){
             Peer peerAdd = new Peer(received, now);
             peers.add(peerAdd);
+            sendAllSnips(received, peerSock);
 
         }
         UDP_Peer_rcd udp_peer = new UDP_Peer_rcd(received, source_location, dtf.format(now));
         udpPeersReceived.add(udp_peer);
-        for(Snip s : snips){
-            
-        }
     }
 
     private static void receiveAcks(String received, String source_location, DatagramSocket peerSock) {
@@ -766,6 +798,28 @@ public class client2 {
 	
 
 	}
+
+    public static void receiveCatch(String received){
+        received = received.substring(4, received.length()).trim();
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
+        LocalDateTime now = LocalDateTime.now();
+        String timeReceived = dtf.format(now);
+        String source_location = received.split(" ")[0];
+        int timeStampReceived = Integer.parseInt(received.split(" ")[1]);
+        String content = received.split(" ")[2];
+        Boolean snipExists = false;
+        for(Snip s : snips){
+            if(s.content == content && s.timeStamp == timeStampReceived && s.source_location == source_location){
+                snipExists = true;
+            }
+        }
+        if(!snipExists){
+            timeStamp.setTimeStamp(Integer.max(timeStamp.getTimeStamp(), timeStampReceived)+1);
+            Snip snip = new Snip(timeStampReceived, content, timeReceived, source_location);
+            snips.add(snip);
+            System.out.println("CatchUp -> " + Integer.toString(timeStampReceived) + " " + content + " " + timeReceived + " " + source_location);
+        }
+    }
 
     /**
      * The UDP receive thread makes a new thread to check the packet which was received via UDP. 
@@ -799,6 +853,7 @@ public class client2 {
                         String received = new String(buf);
                         String first4char = null;
                         
+
                         InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
 
                         for(Peer peer : peers){
@@ -806,12 +861,6 @@ public class client2 {
                                 if(peer.status.equals("silent")){
                                     peer.status = "active";
                                 }
-                                peer.resetStart(Instant.now());
-                            }
-                        }
-
-                        for(Peer peer : peers){
-                            if(peer.location == source_location){
                                 peer.resetStart(Instant.now());
                             }
                         }
@@ -832,10 +881,12 @@ public class client2 {
                                 snipReceived(received, source_location, peerSock);
                                 break;
                             case "peer":
-                                peerReceived(received, source_location);
+                                peerReceived(received, source_location, peerSock);
                                 break;
                             case "ack ":
-                                receiveAcks(received, source_location,peerSock);
+                                receiveAcks(source_location,peerSock);
+                            case "ctch":
+                                receiveCatch(received);
                         }
                     }
                     catch (SocketTimeoutException e) {
@@ -937,6 +988,7 @@ public class client2 {
             DatagramSocket peerSock = new DatagramSocket();
             int UDP_PORT = peerSock.getLocalPort();
             ourLocation = InetAddress.getLocalHost().getHostAddress()+":"+UDP_PORT;
+            
             initiateRegistryContact initContact = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, peers_Reg, sources, snips, udpPeersReceived, udpPeersSent);
             initContact.start();
 
