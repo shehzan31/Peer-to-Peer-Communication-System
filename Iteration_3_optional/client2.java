@@ -854,8 +854,11 @@ public class client2 {
                     for(Peer peer : peers){
                         if (peer.checkDuration(Instant.now()) > 180 ){
                             //mark inactive
+                            if(!peer.status.equals("silent") ){
                             peer.status = "silent";
+                            System.out.println(peer.location + " marked as silent");
                         }
+                    }
                     }
                 try{
                     byte[] buf = new byte[256];
@@ -879,7 +882,7 @@ public class client2 {
                             if(peer.location.equals(source_location)){
                                 
                                 peer.status = "active";
-                                
+                                System.out.println(peer.location + "  marked as active");
                                 peer.resetStart(Instant.now());
                             }
                         }
@@ -895,18 +898,73 @@ public class client2 {
                                 recieveStop2 = true;
                                 initiateRegistryContact initContact2 = new initiateRegistryContact(registryHost, registryPort, peerSock.getLocalPort(), peers, peers_Reg, sources, snips, udpPeersReceived, udpPeersSent, acks);
                                 initContact2.start();
+                                for(Peer peer : peers){
+                                    if(peer.location.equals(source_location)){
+                                        
+                                        if(!peer.status.equals("active")){
+                                        peer.status = "active";
+                                        
+                                        System.out.println(peer.location + "  marked as active");
+                                    }
+                                        peer.resetStart(Instant.now());
+                                    }
+                                }
                                 break;
                             case "snip":
                                 snipReceived(received, source_location, peerSock);
+                                for(Peer peer : peers){
+                                    if(peer.location.equals(source_location)){
+                                        
+                                        if(!peer.status.equals("active")){
+                                        peer.status = "active";
+                                        
+                                        System.out.println(peer.location + "  marked as active");
+                                    }
+                                        peer.resetStart(Instant.now());
+                                    }
+                                }
                                 break;
                             case "peer":
                                 peerReceived(received, source_location, peerSock);
+                                for(Peer peer : peers){
+                                    if(peer.location.equals(source_location)){
+                                        
+                                        if(!peer.status.equals("active")){
+                                        peer.status = "active";
+                                        
+                                        System.out.println(peer.location + "  marked as active");
+                                    }
+                                        peer.resetStart(Instant.now());
+                                    }
+                                }
                                 break;
                             case "ack ":
                                 receiveAcks(received, source_location,peerSock);
+                                for(Peer peer : peers){
+                                    if(peer.location.equals(source_location)){
+                                        
+                                        if(!peer.status.equals("active")){
+                                        peer.status = "active";
+                                        
+                                        System.out.println(peer.location + "  marked as active");
+                                    }
+                                        peer.resetStart(Instant.now());
+                                    }
+                                }
                                 break;
                             case "ctch":
                                 receiveCatch(received);
+                                for(Peer peer : peers){
+                                    if(peer.location.equals(source_location)){
+                                        
+                                        if(!peer.status.equals("active")){
+                                        peer.status = "active";
+                                        
+                                        System.out.println(peer.location + "  marked as active");
+                                    }
+                                        peer.resetStart(Instant.now());
+                                    }
+                                }
                                 break;
                         }
                     }
