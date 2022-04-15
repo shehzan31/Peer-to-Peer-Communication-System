@@ -753,17 +753,9 @@ public class client2 {
         }
     }
 
-    private static void receiveAcks(String source_location, DatagramSocket peerSock) {
-		boolean socketOpen = true;
-		while (socketOpen) {
-			byte[] message = new byte[1024];
-			DatagramPacket packet = new DatagramPacket(message,1024);
-			try {
-				peerSock.receive(packet);
-                System.out.println("ack received from " + peerSock);
-				String ackMessage = new String(message);
-				if (ackMessage.substring(0,2).equalsIgnoreCase("ack")) {
-					int timeStamp = Integer.valueOf(ackMessage.substring(3).trim());
+    private static void receiveAcks(String received, String source_location, DatagramSocket peerSock) {
+
+					int timeStamp = Integer.valueOf(received.substring(3).trim());
                     
                     for(Peer peer: peers){
                         if(source_location == peer.location){
@@ -771,12 +763,8 @@ public class client2 {
                         }
 
                     }
-				}
-			} catch (IOException e) {
-				// do nothing.  When socket closes we can end this method.
-				socketOpen = false;
-			}
-		}
+	
+
 	}
 
     /**
@@ -847,7 +835,7 @@ public class client2 {
                                 peerReceived(received, source_location);
                                 break;
                             case "ack ":
-                                receiveAcks(source_location,peerSock);
+                                receiveAcks(received, source_location,peerSock);
                         }
                     }
                     catch (SocketTimeoutException e) {

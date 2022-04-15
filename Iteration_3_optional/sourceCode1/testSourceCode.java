@@ -1,4 +1,4 @@
-Fri Apr 15 00:00:01 MDT 2022
+Fri Apr 15 00:34:35 MDT 2022
 java
 /**
  * CPSC 559: Project Iteration 3 Optional Requirements solution
@@ -698,31 +698,31 @@ public class client {
             sendAllSnips(source_location, peerSock);
         }
 
-
-        
-        timeStamp.setTimeStamp(Integer.max(timeStamp.getTimeStamp(), timeStampReceived)+1);
-        Snip snip = new Snip(timeStampReceived, content, timeReceived, source_location);
-        snips.add(snip);
-
-
-        try{
-            byte[] toSend = ("ack" + " " + timeStampReceived).getBytes();
-            InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
-            int source_port = Integer.valueOf(source_location.split(":")[1].trim());
-            DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
-            peerSock.send(packet);
-            System.out.println("ack sent to " + source_location);
-        }
-        catch(Exception err) {
-            //Exception handling
-            System.out.println("Error: " + err.getMessage());
+        Boolean snipExists = false;
+        for(Snip s : snips){
+            if(s.content == content && s.timeStamp == timeStampReceived && s.source_location == source_location){
+                snipExists = true;
+            }
         }
 
-
-
-
-
-        System.out.println(Integer.toString(timeStampReceived) + " " + content + " " + timeReceived + " " + source_location);
+        if(!snipExists) {
+            timeStamp.setTimeStamp(Integer.max(timeStamp.getTimeStamp(), timeStampReceived)+1);
+            Snip snip = new Snip(timeStampReceived, content, timeReceived, source_location);
+            snips.add(snip);
+            try{
+                byte[] toSend = ("ack" + " " + timeStampReceived).getBytes();
+                InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
+                int source_port = Integer.valueOf(source_location.split(":")[1].trim());
+                DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
+                peerSock.send(packet);
+                // System.out.println("ack sent to " + source_location);
+            }
+            catch(Exception err) {
+                //Exception handling
+                System.out.println("Error: " + err.getMessage());
+            }
+            System.out.println(Integer.toString(timeStampReceived) + " " + content + " " + timeReceived + " " + source_location);
+        }  
     }
 
     public static void sendAllSnips(String source_location, DatagramSocket peerSock) {
@@ -787,31 +787,23 @@ public class client {
         udpPeersReceived.add(udp_peer);
     }
 
-    private static void receiveAcks(String source_location, DatagramSocket peerSock) {
-		boolean socketOpen = true;
-		while (socketOpen) {
-			byte[] message = new byte[1024];
-			DatagramPacket packet = new DatagramPacket(message,1024);
-			try {
-				peerSock.receive(packet);
-                System.out.println("ack received from " + peerSock);
-				String ackMessage = new String(message);
-				if (ackMessage.substring(0,2).equalsIgnoreCase("ack")) {
-					int timeStamp = Integer.valueOf(ackMessage.substring(3).trim());
-                    
-                    for(Peer peer: peers){
-                        if(source_location == peer.location){
-                            peer.set(ourLocation, timeStamp, "ack");
-                        }
+    private static void receiveAcks(String received, String source_location, DatagramSocket peerSock) {
 
-                    }
-				}
-			} catch (IOException e) {
-				// do nothing.  When socket closes we can end this method.
-				socketOpen = false;
-			}
-		}
-	}
+        int timeStamp = Integer.valueOf(received.substring(3).trim());
+        
+        for(Peer peer: peers){
+            if(source_location == peer.location){
+                peer.set(ourLocation, timeStamp, "ack");
+            }
+
+        }
+
+
+}
+
+    public static void receiveCatch(String received){
+        
+    }
 
     /**
      * The UDP receive thread makes a new thread to check the packet which was received via UDP. 
@@ -825,7 +817,7 @@ public class client {
 
                 while(!recieveStop){
                     for(Peer peer : peers){
-                        if (peer.checkDuration(Instant.now()) == 181 ){
+                        if (peer.checkDuration(Instant.now()) > 180 ){
                             //mark inactive
                             peer.status = "silent";
                         }
@@ -845,10 +837,14 @@ public class client {
                         String received = new String(buf);
                         String first4char = null;
                         
+
                         InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
 
                         for(Peer peer : peers){
                             if(peer.location == source_location){
+                                if(peer.status.equals("silent")){
+                                    peer.status = "active";
+                                }
                                 peer.resetStart(Instant.now());
                             }
                         }
@@ -872,7 +868,9 @@ public class client {
                                 peerReceived(received, source_location, peerSock);
                                 break;
                             case "ack ":
-                                receiveAcks(source_location,peerSock);
+                                receiveAcks(received, source_location,peerSock);
+                            case "ctch":
+                                receiveCatch(received);
                         }
                     }
                     catch (SocketTimeoutException e) {

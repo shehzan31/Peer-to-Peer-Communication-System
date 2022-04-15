@@ -785,31 +785,19 @@ public class client {
         udpPeersReceived.add(udp_peer);
     }
 
-    private static void receiveAcks(String source_location, DatagramSocket peerSock) {
-		boolean socketOpen = true;
-		while (socketOpen) {
-			byte[] message = new byte[1024];
-			DatagramPacket packet = new DatagramPacket(message,1024);
-			try {
-				peerSock.receive(packet);
-                System.out.println("ack received from " + peerSock);
-				String ackMessage = new String(message);
-				if (ackMessage.substring(0,2).equalsIgnoreCase("ack")) {
-					int timeStamp = Integer.valueOf(ackMessage.substring(3).trim());
-                    
-                    for(Peer peer: peers){
-                        if(source_location == peer.location){
-                            peer.set(ourLocation, timeStamp, "ack");
-                        }
+    private static void receiveAcks(String received, String source_location, DatagramSocket peerSock) {
 
-                    }
-				}
-			} catch (IOException e) {
-				// do nothing.  When socket closes we can end this method.
-				socketOpen = false;
-			}
-		}
-	}
+        int timeStamp = Integer.valueOf(received.substring(3).trim());
+        
+        for(Peer peer: peers){
+            if(source_location == peer.location){
+                peer.set(ourLocation, timeStamp, "ack");
+            }
+
+        }
+
+
+}
 
     public static void receiveCatch(String received){
         
@@ -878,7 +866,7 @@ public class client {
                                 peerReceived(received, source_location, peerSock);
                                 break;
                             case "ack ":
-                                receiveAcks(source_location,peerSock);
+                                receiveAcks(received, source_location,peerSock);
                             case "ctch":
                                 receiveCatch(received);
                         }
