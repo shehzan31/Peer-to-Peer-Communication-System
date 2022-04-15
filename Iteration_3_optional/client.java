@@ -983,17 +983,7 @@ public class client {
                                 break;
                             case "ctch":
                                 receiveCatch(received);
-                                for(Peer peer : peers){
-                                    if(peer.location.equals(source_location)){
-                                        
-                                        if(!peer.status.equals("active")){
-                                        peer.status = "active";
-                                        
-                                        System.out.println(peer.location + "  marked as active");
-                                    }
-                                        peer.resetStart(Instant.now());
-                                    }
-                                }
+
                                 break;
                         }
                     }
