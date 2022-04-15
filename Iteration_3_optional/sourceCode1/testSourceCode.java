@@ -1,4 +1,4 @@
-Thu Apr 14 22:34:27 MDT 2022
+Thu Apr 14 23:42:16 MDT 2022
 java
 /**
  * CPSC 559: Project Iteration 3 Optional Requirements solution
@@ -691,11 +691,12 @@ public class client {
 
 
         try{
-            byte[] toSend = ("ack " + timeStampReceived).getBytes();
+            byte[] toSend = ("ack" + " " + timeStampReceived).getBytes();
             InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
             int source_port = Integer.valueOf(source_location.split(":")[1].trim());
             DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
             peerSock.send(packet);
+            // System.out.println("ack sent to " + source_location);
         }
         catch(Exception err) {
             //Exception handling
@@ -789,7 +790,12 @@ public class client {
             public synchronized void run(){
 
                 while(!recieveStop){
-                    
+                    for(Peer peer : peers){
+                        if (peer.checkDuration(Instant.now()) == 181 ){
+                            //mark inactive
+                            peer.status = "silent";
+                        }
+                    }
                 try{
                     byte[] buf = new byte[256];
                     if(counter>0){
@@ -851,21 +857,21 @@ public class client {
         t.start();
     }
 
-    public static void maintainStatus() {
-        Thread t = new Thread() {
-            public synchronized void run(){
-                while(!recieveStop){
-                    for(Peer peer : peers){
-                        if (peer.checkDuration(Instant.now()) == 181 ){
-                            //mark inactive
-                            peer.status = "silent";
-                        }
-                    }
-                }
-            }
-        };
-        t.start();
-    }
+    // public static void maintainStatus() {
+    //     Thread t = new Thread() {
+    //         public synchronized void run(){
+    //             while(!recieveStop){
+    //                 for(Peer peer : peers){
+    //                     if (peer.checkDuration(Instant.now()) == 181 ){
+    //                         //mark inactive
+    //                         peer.status = "silent";
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     };
+    //     t.start();
+    // }
 
 
     /**
@@ -941,7 +947,7 @@ public class client {
             TimeUnit.SECONDS.sleep(1);
             createUDPReceiveThread(peerSock);
             sendPeerPackets(peerSock);
-            maintainStatus();
+            // maintainStatus();
             SnipSend snipSend = new SnipSend(peerSock, timeStamp, peers, ourLocation);
             snipSend.start();
             while(!recieveStop2){
