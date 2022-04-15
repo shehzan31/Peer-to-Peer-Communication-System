@@ -833,7 +833,7 @@ public class client {
     private static void receiveAcks(String received, String source_location, DatagramSocket peerSock) {
 
         int timeStamp = Integer.valueOf(received.substring(4, received.length()).trim());
-        System.out.println("ack received from: " + peerSock);
+        System.out.println("ack received from: " + source_location);
 
         for(Peer peer: peers){
             if(source_location.equals(peer.location)){
