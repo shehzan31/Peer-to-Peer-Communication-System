@@ -709,7 +709,7 @@ public class client {
             int source_port = Integer.valueOf(source_location.split(":")[1].trim());
             DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
             peerSock.send(packet);
-            // System.out.println("ack sent to " + source_location);
+            System.out.println("ack sent to " + source_location);
         }
         catch(Exception err) {
             //Exception handling
@@ -792,6 +792,7 @@ public class client {
 			DatagramPacket packet = new DatagramPacket(message,1024);
 			try {
 				peerSock.receive(packet);
+                System.out.println("ack received from " + peerSock);
 				String ackMessage = new String(message);
 				if (ackMessage.substring(0,3).equalsIgnoreCase("ack")) {
 					int timeStamp = Integer.valueOf(ackMessage.substring(3).trim());
