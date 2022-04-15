@@ -843,10 +843,14 @@ public class client {
                         String received = new String(buf);
                         String first4char = null;
                         
+
                         InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
 
                         for(Peer peer : peers){
                             if(peer.location == source_location){
+                                if(peer.status.equals("silent")){
+                                    peer.status = "active";
+                                }
                                 peer.resetStart(Instant.now());
                             }
                         }

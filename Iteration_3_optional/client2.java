@@ -815,6 +815,15 @@ public class client2 {
 
                         for(Peer peer : peers){
                             if(peer.location == source_location){
+                                if(peer.status.equals("silent")){
+                                    peer.status = "active";
+                                }
+                                peer.resetStart(Instant.now());
+                            }
+                        }
+
+                        for(Peer peer : peers){
+                            if(peer.location == source_location){
                                 peer.resetStart(Instant.now());
                             }
                         }
