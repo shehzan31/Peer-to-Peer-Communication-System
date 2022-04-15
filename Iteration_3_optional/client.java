@@ -67,7 +67,7 @@ class Peer{
         snipTimeStampLocation.put(new Tuple(key, timestamp), value);
     }
 
-    public String get(String key, int timestamp) {
+    public synchronized String get(String key, int timestamp) {
         
         for (int i = timestamp; i >= 1; i--) {
             String value = snipTimeStampLocation.getOrDefault(new Tuple(key, i), "");
@@ -76,12 +76,12 @@ class Peer{
         }
         return null;
     }
-    public long checkDuration(Instant endTime){
+    public synchronized long checkDuration(Instant endTime){
         return Duration.between(startTime, endTime).getSeconds();
     }
-    public void resetStart(Instant newTime){
+    public synchronized void resetStart(Instant newTime){
         this.startTime = newTime;
-    }
+    }   
 }
 
 //UDP Peers Received class: Defines a peer which was received via UDP
@@ -629,6 +629,7 @@ public class client {
     public static ArrayList<Peer> peers_Reg = new ArrayList<Peer>();
     public static ArrayList<source> sources = new ArrayList<source>();
     public static ArrayList<Snip> snips = new ArrayList<Snip>();
+    
     public static ArrayList<UDP_Peer_rcd> udpPeersReceived = new ArrayList<UDP_Peer_rcd>();
     public static ArrayList<UDP_Peer_sent> udpPeersSent = new ArrayList<UDP_Peer_sent>();
     // host address and port number of Registry
@@ -686,17 +687,7 @@ public class client {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
         LocalDateTime now = LocalDateTime.now();
         String timeReceived = dtf.format(now);
-        // Boolean snipSenderAvail = false;
-        // for(Peer p : peers){
-        //     if(p.location.equals(source_location)){
-        //         snipSenderAvail = true;
-        //     }
-        // }
-        // if(!snipSenderAvail){
-        //     Peer source = new Peer(source_location, now);
-        //     peers.add(source);
-        //     sendAllSnips(source_location, peerSock);
-        // }
+
 
         Boolean snipExists = false;
         for(Snip s : snips){
