@@ -823,7 +823,7 @@ public class client {
 
                 while(!recieveStop){
                     for(Peer peer : peers){
-                        if (peer.checkDuration(Instant.now()) == 181 ){
+                        if (peer.checkDuration(Instant.now()) > 180 ){
                             //mark inactive
                             peer.status = "silent";
                         }
