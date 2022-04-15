@@ -858,10 +858,10 @@ public class client {
                         InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
 
                         for(Peer peer : peers){
-                            if(peer.location == source_location){
-                                if(peer.status.equals("silent")){
-                                    peer.status = "active";
-                                }
+                            if(peer.location.equals(source_location){
+                                
+                                peer.status = "active";
+                                
                                 peer.resetStart(Instant.now());
                             }
                         }
