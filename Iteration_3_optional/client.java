@@ -1,5 +1,5 @@
 /**
- * CPSC 559: Project Iteration 3 Optional Requirements solution
+ * CPSC 559: Project Iteration 3/4 Optional Requirements solution
  * Client Class which connects with the Registry via TCP Protocol and interacts as described in the rubric
  * @author Shehzan Murad Ali and Humble Chaudhry
  **/ 
@@ -63,10 +63,12 @@ class Peer{
         this.status = "active";
     }
 
+    // set method for snips
     public synchronized void set(String key, int timestamp, String value) {
         snipTimeStampLocation.put(new Tuple(key, timestamp), value);
     }
 
+    // get method for snipTimeStamp
     public synchronized String get(String key, int timestamp) {
         
         for (int i = timestamp; i >= 1; i--) {
@@ -76,18 +78,25 @@ class Peer{
         }
         return null;
     }
+    //checks time passed
     public synchronized long checkDuration(Instant endTime){
         return Duration.between(startTime, endTime).getSeconds();
     }
+    //resets time
     public synchronized void resetStart(Instant newTime){
         this.startTime = newTime;
     }   
 }
 
+/**
+ * Ack class to track each ack received from peers
+ */
 class Ack{
+    // stores location and timestamp of the ack received
     public int timeStamp;
     public String source_location;
     
+    // constructor
     public Ack(String source, int time){
         this.source_location = source;
         this.timeStamp = time;
@@ -147,10 +156,6 @@ class Snip{
         this.timeReceived = timeReceived;
         this.source_location = source_location;
     }
-
-    // int getTimeStamp(String source_location){
-
-    // }
 }
 
 /**
@@ -194,6 +199,7 @@ class SnipSend extends Thread{
     public ArrayList<Peer> peers;
     public String ourLocation;
 
+    // constructor
     public  SnipSend(DatagramSocket sock, VolatileTimeStamp time, ArrayList<Peer> p, String loc){
         this.peerSock = sock;
         this.timeStamp = time;
@@ -265,6 +271,9 @@ class SnipSend extends Thread{
 
 
 //Making Tuple Class: https://leetcode.com/problems/time-based-key-value-store/discuss/466306/Java-solution-using-HashMap-with-composite-key-Beats-89.21-submissions-wrt-time
+/**
+ * Tuple class to track key and timestamp for snips, easy to track
+ */
  class Tuple {
     String key;
     int timestamp;
@@ -526,13 +535,17 @@ class initiateRegistryContact extends Thread{
             for(Snip s : snips){
                 writer.write(Integer.toString(s.timeStamp) + " " + s.content.trim() + " " + s.source_location.trim() + "\n");
             }
+            // -------- updated code starts ---------
+            // checks acks, if exists then sends number of acks, followed by each ack
             if(acks.size() > 0){
                 writer.write(Integer.toString(acks.size())+"\n");
                 for(Ack ack : acks){
                     writer.write(Integer.toString(ack.timeStamp) + " " + ack.source_location + "\n");
                 }
             } 
+            // if no acks, send 0
             else writer.write("0");
+            // -------- updated code ends ------------
             // flushes everything in the writer
             writer.flush();
         }
@@ -738,6 +751,12 @@ public class client {
         }  
     }
 
+    /**
+     * This is a method to send all the catch up snips to other peers who have recently been joined
+     * Sends all the snips using peer socket and source location received via parameters
+     * @param source_location
+     * @param peerSock
+     */
     public static void sendAllSnips(String source_location, DatagramSocket peerSock) {
         ArrayList<Snip> toSendList = snips;
         Collections.reverse(toSendList);
@@ -802,6 +821,15 @@ public class client {
         udpPeersReceived.add(udp_peer);
     }
 
+    /**
+     * This method handles all the acks received from other peers.
+     * -> Updates the ack received in peer class object
+     * -> Creates a new ack and adds it to the acks megalist
+     * 
+     * @param received
+     * @param source_location
+     * @param peerSock
+     */
     private static void receiveAcks(String received, String source_location, DatagramSocket peerSock) {
 
         int timeStamp = Integer.valueOf(received.substring(4, received.length()).trim());
@@ -817,6 +845,12 @@ public class client {
         acks.add(ack);
     }
 
+    /**
+     * This method handles catchup messages
+     * -> Checks if the snip is already received
+     *      -> If not, then creates a Snip and adds to snips megalist. Also displays to terminal
+     * @param received
+     */
     public static void receiveCatch(String received){
         received = received.substring(4, received.length()).trim();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
@@ -902,6 +936,7 @@ public class client {
                             case "peer":
                                 peerReceived(received, source_location, peerSock);
                                 break;
+                            // Added 2 more cases of ack and ctch <- update
                             case "ack ":
                                 receiveAcks(received, source_location,peerSock);
                                 break;
@@ -925,22 +960,6 @@ public class client {
         };
         t.start();
     }
-
-    // public static void maintainStatus() {
-    //     Thread t = new Thread() {
-    //         public synchronized void run(){
-    //             while(!recieveStop){
-    //                 for(Peer peer : peers){
-    //                     if (peer.checkDuration(Instant.now()) == 181 ){
-    //                         //mark inactive
-    //                         peer.status = "silent";
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     };
-    //     t.start();
-    // }
 
 
     /**
@@ -972,7 +991,6 @@ public class client {
                                             UDP_Peer_sent udp_peer = new UDP_Peer_sent(peer.location, p.location, dtf.format(now));
                                             udpPeersSent.add(udp_peer);
                                             sent = true;
-                                            //System.out.println("Sent peer " + peer.location + " to " + p.location);
                                         }
                                     }  
                                 } 
@@ -1004,12 +1022,7 @@ public class client {
     public static void main(String[] args)
 	{              
 		try{
-            ArrayList<Integer> test = new ArrayList<Integer>();
-            test.add(1);
-            test.add(2);
-            test.add(3);
-            Collections.reverse(test);
-            System.out.println(test); 
+
             // Starting a datagram socket
             DatagramSocket peerSock = new DatagramSocket();
             int UDP_PORT = peerSock.getLocalPort();
@@ -1021,15 +1034,12 @@ public class client {
             TimeUnit.SECONDS.sleep(1);
             createUDPReceiveThread(peerSock);
             sendPeerPackets(peerSock);
-            // maintainStatus();
             SnipSend snipSend = new SnipSend(peerSock, timeStamp, peers, ourLocation);
             snipSend.start();
             while(!recieveStop2){
                 
             }
             snipSend.interrupt();
-            // initiateRegistryContact initContact2 = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, peers_Reg, sources, snips, udpPeersReceived, udpPeersSent);
-            // initContact2.start();
             
 		}
 		catch(Exception err) {
