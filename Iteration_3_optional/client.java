@@ -794,7 +794,7 @@ public class client {
 				peerSock.receive(packet);
                 System.out.println("ack received from " + peerSock);
 				String ackMessage = new String(message);
-				if (ackMessage.substring(0,3).equalsIgnoreCase("ack")) {
+				if (ackMessage.substring(0,2).equalsIgnoreCase("ack")) {
 					int timeStamp = Integer.valueOf(ackMessage.substring(3).trim());
                     
                     for(Peer peer: peers){
@@ -869,7 +869,7 @@ public class client {
                             case "peer":
                                 peerReceived(received, source_location, peerSock);
                                 break;
-                            case "ack":
+                            case "ack ":
                                 receiveAcks(source_location,peerSock);
                         }
                     }
