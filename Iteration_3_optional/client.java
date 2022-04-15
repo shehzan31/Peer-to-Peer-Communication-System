@@ -221,6 +221,7 @@ class SnipSend extends Thread{
                             long end_time = start_time + wait_time;
 
                             while (System.currentTimeMillis() < end_time) {
+    
                                 if (p.get(ourLocation, timeStampSend) != null){
                                     System.out.println("ack received!");
                                     break outer;
@@ -713,7 +714,7 @@ public class client {
                 int source_port = Integer.valueOf(source_location.split(":")[1].trim());
                 DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
                 peerSock.send(packet);
-                // System.out.println("ack sent to " + source_location);
+                System.out.println("ack sent to " + source_location);
             }
             catch(Exception err) {
                 //Exception handling
@@ -787,16 +788,15 @@ public class client {
 
     private static void receiveAcks(String received, String source_location, DatagramSocket peerSock) {
 
-        int timeStamp = Integer.valueOf(received.substring(3).trim());
-        
+        int timeStamp = Integer.valueOf(received.substring(4, received.length()).trim());
+        System.out.println("ack received from: " + peerSock);
+
         for(Peer peer: peers){
-            if(source_location == peer.location){
+            if(source_location.equals(peer.location)){
+                System.out.println("this equals it");
                 peer.set(ourLocation, timeStamp, "ack");
             }
-
         }
-
-
 }
 
     public static void receiveCatch(String received){

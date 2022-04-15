@@ -1,4 +1,4 @@
-Fri Apr 15 00:34:35 MDT 2022
+Fri Apr 15 01:34:16 MDT 2022
 java
 /**
  * CPSC 559: Project Iteration 3 Optional Requirements solution
@@ -223,6 +223,7 @@ class SnipSend extends Thread{
                             long end_time = start_time + wait_time;
 
                             while (System.currentTimeMillis() < end_time) {
+    
                                 if (p.get(ourLocation, timeStampSend) != null){
                                     System.out.println("ack received!");
                                     break outer;
@@ -715,7 +716,7 @@ public class client {
                 int source_port = Integer.valueOf(source_location.split(":")[1].trim());
                 DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
                 peerSock.send(packet);
-                // System.out.println("ack sent to " + source_location);
+                System.out.println("ack sent to " + source_location);
             }
             catch(Exception err) {
                 //Exception handling
@@ -789,20 +790,37 @@ public class client {
 
     private static void receiveAcks(String received, String source_location, DatagramSocket peerSock) {
 
-        int timeStamp = Integer.valueOf(received.substring(3).trim());
-        
+        int timeStamp = Integer.valueOf(received.substring(4, received.length()).trim());
+        System.out.println("ack received from: " + peerSock);
+
         for(Peer peer: peers){
-            if(source_location == peer.location){
+            if(source_location.equals(peer.location)){
+                System.out.println("this equals it");
                 peer.set(ourLocation, timeStamp, "ack");
             }
-
         }
-
-
 }
 
     public static void receiveCatch(String received){
-        
+        received = received.substring(4, received.length()).trim();
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
+        LocalDateTime now = LocalDateTime.now();
+        String timeReceived = dtf.format(now);
+        String source_location = received.split(" ")[0];
+        int timeStampReceived = Integer.parseInt(received.split(" ")[1]);
+        String content = received.split(" ")[2];
+        Boolean snipExists = false;
+        for(Snip s : snips){
+            if(s.content == content && s.timeStamp == timeStampReceived && s.source_location == source_location){
+                snipExists = true;
+            }
+        }
+        if(!snipExists){
+            timeStamp.setTimeStamp(Integer.max(timeStamp.getTimeStamp(), timeStampReceived)+1);
+            Snip snip = new Snip(timeStampReceived, content, timeReceived, source_location);
+            snips.add(snip);
+            System.out.println("CatchUp -> " + Integer.toString(timeStampReceived) + " " + content + " " + timeReceived + " " + source_location);
+        }
     }
 
     /**
