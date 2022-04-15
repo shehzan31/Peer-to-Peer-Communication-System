@@ -19,8 +19,8 @@ import java.time.LocalDateTime;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Objects;
 import java.time.Instant;
-import java.util.concurrent.TimeUnit;
 
+import java.util.concurrent.TimeUnit;
 
 
 
@@ -538,7 +538,7 @@ class initiateRegistryContact extends Thread{
      * @param writer
      */
     public synchronized static void sendTeamName(BufferedWriter writer){
-        String teamName = "The Social Network";
+        String teamName = "test";
 
         try{
             //writes then flushes
@@ -620,7 +620,7 @@ class initiateRegistryContact extends Thread{
 }
 
 // Client class - main class
-public class client {
+public class client2 {
 
     // master arraylist to store peers (no duplicates) and sources (class provided above)
     public static ArrayList<Peer> peers = new ArrayList<Peer>();
@@ -641,13 +641,14 @@ public class client {
     public static VolatileTimeStamp timeStamp = new VolatileTimeStamp();
     //the current location 
     public static String ourLocation;
+    
     /**
      * The shut down procedure is a function which closes the datagram socket to send the peers. 
      * @param peerSock
      */
     public static void shutDownProcedure(DatagramSocket peerSock, InetAddress udpHost,int source_port){
 
-        String teamName = "The Social Network";
+        String teamName = "test";
 
         byte[] toSend = ("ack" + teamName).getBytes();
         DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
@@ -932,7 +933,6 @@ public class client {
             DatagramSocket peerSock = new DatagramSocket();
             int UDP_PORT = peerSock.getLocalPort();
             ourLocation = InetAddress.getLocalHost().getHostAddress()+":"+UDP_PORT;
-            
             initiateRegistryContact initContact = new initiateRegistryContact(registryHost, registryPort, UDP_PORT, peers, peers_Reg, sources, snips, udpPeersReceived, udpPeersSent);
             initContact.start();
 

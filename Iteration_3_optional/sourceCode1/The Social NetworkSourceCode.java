@@ -1,3 +1,5 @@
+Thu Apr 14 22:23:12 MDT 2022
+java
 /**
  * CPSC 559: Project Iteration 3 Optional Requirements solution
  * Client Class which connects with the Registry via TCP Protocol and interacts as described in the rubric
@@ -641,6 +643,8 @@ public class client {
     public static VolatileTimeStamp timeStamp = new VolatileTimeStamp();
     //the current location 
     public static String ourLocation;
+    public boolean registryConatct = true;
+    
     /**
      * The shut down procedure is a function which closes the datagram socket to send the peers. 
      * @param peerSock
@@ -956,3 +960,4 @@ public class client {
 		}
 	}
 }
+
