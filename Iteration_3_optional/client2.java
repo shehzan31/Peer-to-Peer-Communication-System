@@ -695,7 +695,7 @@ public class client2 {
             int source_port = Integer.valueOf(source_location.split(":")[1].trim());
             DatagramPacket packet = new DatagramPacket(toSend, toSend.length, udpHost, source_port);
             peerSock.send(packet);
-            // System.out.println("ack sent to " + source_location);
+            System.out.println("ack sent to " + source_location);
         }
         catch(Exception err) {
             //Exception handling
@@ -760,8 +760,9 @@ public class client2 {
 			DatagramPacket packet = new DatagramPacket(message,1024);
 			try {
 				peerSock.receive(packet);
+                System.out.println("ack received from " + peerSock);
 				String ackMessage = new String(message);
-				if (ackMessage.substring(0,3).equalsIgnoreCase("ack")) {
+				if (ackMessage.substring(0,2).equalsIgnoreCase("ack")) {
 					int timeStamp = Integer.valueOf(ackMessage.substring(3).trim());
                     
                     for(Peer peer: peers){
@@ -790,7 +791,7 @@ public class client2 {
 
                 while(!recieveStop){
                     for(Peer peer : peers){
-                        if (peer.checkDuration(Instant.now()) == 181 ){
+                        if (peer.checkDuration(Instant.now()) > 180 ){
                             //mark inactive
                             peer.status = "silent";
                         }
@@ -811,6 +812,15 @@ public class client2 {
                         String first4char = null;
                         
                         InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
+
+                        for(Peer peer : peers){
+                            if(peer.location == source_location){
+                                if(peer.status.equals("silent")){
+                                    peer.status = "active";
+                                }
+                                peer.resetStart(Instant.now());
+                            }
+                        }
 
                         for(Peer peer : peers){
                             if(peer.location == source_location){
@@ -836,7 +846,7 @@ public class client2 {
                             case "peer":
                                 peerReceived(received, source_location);
                                 break;
-                            case "ack":
+                            case "ack ":
                                 receiveAcks(source_location,peerSock);
                         }
                     }

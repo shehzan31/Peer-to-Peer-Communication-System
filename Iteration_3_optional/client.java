@@ -792,8 +792,9 @@ public class client {
 			DatagramPacket packet = new DatagramPacket(message,1024);
 			try {
 				peerSock.receive(packet);
+                System.out.println("ack received from " + peerSock);
 				String ackMessage = new String(message);
-				if (ackMessage.substring(0,3).equalsIgnoreCase("ack")) {
+				if (ackMessage.substring(0,2).equalsIgnoreCase("ack")) {
 					int timeStamp = Integer.valueOf(ackMessage.substring(3).trim());
                     
                     for(Peer peer: peers){
@@ -826,7 +827,7 @@ public class client {
 
                 while(!recieveStop){
                     for(Peer peer : peers){
-                        if (peer.checkDuration(Instant.now()) == 181 ){
+                        if (peer.checkDuration(Instant.now()) > 180 ){
                             //mark inactive
                             peer.status = "silent";
                         }
@@ -846,10 +847,14 @@ public class client {
                         String received = new String(buf);
                         String first4char = null;
                         
+
                         InetAddress udpHost = InetAddress.getByName(source_location.split(":")[0]);
 
                         for(Peer peer : peers){
                             if(peer.location == source_location){
+                                if(peer.status.equals("silent")){
+                                    peer.status = "active";
+                                }
                                 peer.resetStart(Instant.now());
                             }
                         }
@@ -872,7 +877,7 @@ public class client {
                             case "peer":
                                 peerReceived(received, source_location, peerSock);
                                 break;
-                            case "ack":
+                            case "ack ":
                                 receiveAcks(source_location,peerSock);
                             case "ctch":
                                 receiveCatch(received);
