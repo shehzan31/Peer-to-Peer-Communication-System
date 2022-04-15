@@ -204,6 +204,7 @@ class SnipSend extends Thread{
                 
                 byte[] toSend = ("snip"+Integer.toString(timeStampSend)+" "+content).getBytes();
                 for(Peer p : peers){
+
                     if(!p.location.equals(ourLocation)){
                         if(p.status.equals("active")){
                         outer: for (int counter = 0; counter < 3; counter++) {
@@ -785,19 +786,20 @@ public class client {
         udpPeersReceived.add(udp_peer);
     }
 
-    private static void receiveAcks(String received, String source_location, DatagramSocket peerSock) {
+    public static void receiveAcks(String received, String source_location, DatagramSocket peerSock) {
 
-        int timeStamp = Integer.valueOf(received.substring(3).trim());
+        int timeStamp = Integer.valueOf(received.substring(3, received.length()).trim());
         
-        for(Peer peer: peers){
+        for(Peer peer : peers){
             if(source_location == peer.location){
                 peer.set(ourLocation, timeStamp, "ack");
+                System.out.println("Received Ack");
             }
 
         }
 
 
-}
+    }
 
     public static void receiveCatch(String received){
         received = received.substring(4, received.length()).trim();

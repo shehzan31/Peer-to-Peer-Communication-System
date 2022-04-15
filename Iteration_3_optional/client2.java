@@ -52,7 +52,7 @@ class Peer{
     public LocalDateTime timeStamp; 
     private ConcurrentHashMap<Tuple, String> snipTimeStampLocation = new ConcurrentHashMap<Tuple, String>();
     public String status;
-    public Instant startTime; 
+    public Instant startTime;
 
     //Constructor storing all the values
     public Peer(String loc, LocalDateTime time){
@@ -785,19 +785,19 @@ public class client2 {
         udpPeersReceived.add(udp_peer);
     }
 
-    private static void receiveAcks(String received, String source_location, DatagramSocket peerSock) {
+    public static void receiveAcks(String received, String source_location, DatagramSocket peerSock) {
 
-					int timeStamp = Integer.valueOf(received.substring(3).trim());
-                    
-                    for(Peer peer: peers){
-                        if(source_location == peer.location){
-                            peer.set(ourLocation, timeStamp, "ack");
-                        }
+        int timeStamp = Integer.valueOf(received.substring(3).trim());
+        
+        for(Peer peer: peers){
+            if(source_location == peer.location){
+                peer.set(ourLocation, timeStamp, "ack");
+            }
 
-                    }
-	
+        }
 
-	}
+
+}
 
     public static void receiveCatch(String received){
         received = received.substring(4, received.length()).trim();
@@ -884,7 +884,7 @@ public class client2 {
                                 peerReceived(received, source_location, peerSock);
                                 break;
                             case "ack ":
-                                receiveAcks(source_location,peerSock);
+                                receiveAcks(received, source_location,peerSock);
                             case "ctch":
                                 receiveCatch(received);
                         }

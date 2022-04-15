@@ -1,4 +1,4 @@
-Fri Apr 15 00:34:35 MDT 2022
+Fri Apr 15 00:52:19 MDT 2022
 java
 /**
  * CPSC 559: Project Iteration 3 Optional Requirements solution
@@ -206,7 +206,9 @@ class SnipSend extends Thread{
                 
                 byte[] toSend = ("snip"+Integer.toString(timeStampSend)+" "+content).getBytes();
                 for(Peer p : peers){
+
                     if(!p.location.equals(ourLocation)){
+                        System.out.println("Yes");
                         if(p.status.equals("active")){
                         outer: for (int counter = 0; counter < 3; counter++) {
                         LocalDateTime now = LocalDateTime.now();
@@ -787,7 +789,7 @@ public class client {
         udpPeersReceived.add(udp_peer);
     }
 
-    private static void receiveAcks(String received, String source_location, DatagramSocket peerSock) {
+    public static void receiveAcks(String received, String source_location, DatagramSocket peerSock) {
 
         int timeStamp = Integer.valueOf(received.substring(3).trim());
         
@@ -799,10 +801,28 @@ public class client {
         }
 
 
-}
+    }
 
     public static void receiveCatch(String received){
-        
+        received = received.substring(4, received.length()).trim();
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
+        LocalDateTime now = LocalDateTime.now();
+        String timeReceived = dtf.format(now);
+        String source_location = received.split(" ")[0];
+        int timeStampReceived = Integer.parseInt(received.split(" ")[1]);
+        String content = received.split(" ")[2];
+        Boolean snipExists = false;
+        for(Snip s : snips){
+            if(s.content == content && s.timeStamp == timeStampReceived && s.source_location == source_location){
+                snipExists = true;
+            }
+        }
+        if(!snipExists){
+            timeStamp.setTimeStamp(Integer.max(timeStamp.getTimeStamp(), timeStampReceived)+1);
+            Snip snip = new Snip(timeStampReceived, content, timeReceived, source_location);
+            snips.add(snip);
+            System.out.println("CatchUp -> " + Integer.toString(timeStampReceived) + " " + content + " " + timeReceived + " " + source_location);
+        }
     }
 
     /**
